@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { authRouter } from "./auth.route.js";
 
 export const router = Router();
 
@@ -8,3 +9,5 @@ router.get("/", (req, res) => {
         versao: "v1.0.0"
     })
 });
+
+router.use("/user", authRouter);

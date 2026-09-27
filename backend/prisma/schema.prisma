@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TipoUsuario {
+  USER
+  ADMIN
+}
+
+model Categoria {
+  id        Int     @id @default(autoincrement())
+  nome      String  @db.VarChar(120)
+  descricao String?
+
+  livros    Livro[]
+
+  @@map("categoria")
+}
+
+model Livro {
+  id            Int          @id @default(autoincrement())
+  isbn          String       @unique @db.VarChar(20)
+  categoriaId   Int          @map("categoria_id")
+  titulo        String       @db.VarChar(255)
+  editora       String?      @db.VarChar(120)
+  anoPublicacao Int?         @map("ano_publicacao") @db.SmallInt
+  quantidade    Int
+  disponiveis   Int
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  categoria   Categoria    @relation(fields: [categoriaId], references: [id])
+  autores     LivroAutor[]
+  emprestimos Emprestimo[]
+
+  @@index([categoriaId])
+  @@map("livro")
+}
+
+model Autor {
+  id            Int          @id @default(autoincrement())
+  nome          String       @db.VarChar(150)
+  nacionalidade String?      @db.VarChar(80)
+  nascimento    DateTime?    @db.Date
+
+  livros LivroAutor[]
+
+  @@map("autor")
+}
+
+model LivroAutor {
+  livroId Int @map("livro_id")
+  autorId Int @map("autor_id")
+
+  livro Livro @relation(fields: [livroId], references: [id], onDelete: Cascade)
+  autor Autor @relation(fields: [autorId], references: [id], onDelete: Cascade)
+
+  @@id([livroId, autorId])
+  @@map("livro_autor")
+}
+
+model Usuario {
+  id        Int         @id @default(autoincrement())
+  nome      String      @db.VarChar(150)
+  email     String      @unique @db.VarChar(255)
+  senha     String      @db.VarChar(255)
+  matricula String      @unique @db.VarChar(30)
+  tipo      TipoUsuario @default(USER)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  emprestimos Emprestimo[]
+
+  @@map("usuario")
+}
+
+model Emprestimo {
+  id             Int       @id @default(autoincrement())
+  livroId        Int       @map("livro_id")
+  usuarioId      Int       @map("usuario_id")
+  dataEmprestimo DateTime  @map("data_emprestimo") @db.Date
+  dataPrevista   DateTime  @map("data_prevista") @db.Date
+  dataDevolucao  DateTime? @map("data_devolucao") @db.Date
+  status         String    @db.VarChar(30)
+  observacao     String?
+
+  livro   Livro   @relation(fields: [livroId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([livroId])
+  @@index([usuarioId])
+  @@map("emprestimo")
+}

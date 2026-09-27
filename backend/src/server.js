@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { router } from "./routes/router.js";
+import { ConnectionDB } from "./configs/dbConnecting.js";
 
 dotenv.config();
 
@@ -18,6 +19,12 @@ app.use(
 
 app.use(router);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Servidor rodando! -> http:///localhost:${process.env.PORT}`);
-});
+ConnectionDB()
+  .then(() => {
+    app.listen(process.env.PORT, () => {
+      console.log(`Servidor rodando! -> http://localhost:${process.env.PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Erro acontecido (server.js):", error);
+  });
