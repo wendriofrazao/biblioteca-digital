@@ -16,22 +16,22 @@ model Categoria {
   nome      String  @db.VarChar(120)
   descricao String?
 
-  livros    Livro[]
+  livros Livro[]
 
   @@map("categoria")
 }
 
 model Livro {
-  id            Int          @id @default(autoincrement())
-  isbn          String       @unique @db.VarChar(20)
-  categoriaId   Int          @map("categoria_id")
-  titulo        String       @db.VarChar(255)
-  editora       String?      @db.VarChar(120)
-  anoPublicacao Int?         @map("ano_publicacao") @db.SmallInt
+  id            Int      @id @default(autoincrement())
+  isbn          String   @unique @db.VarChar(20)
+  categoriaId   Int      @map("categoria_id")
+  titulo        String   @db.VarChar(255)
+  editora       String?  @db.VarChar(120)
+  anoPublicacao Int?     @map("ano_publicacao") @db.SmallInt
   quantidade    Int
   disponiveis   Int
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   categoria   Categoria    @relation(fields: [categoriaId], references: [id])
   autores     LivroAutor[]
@@ -42,10 +42,10 @@ model Livro {
 }
 
 model Autor {
-  id            Int          @id @default(autoincrement())
-  nome          String       @db.VarChar(150)
-  nacionalidade String?      @db.VarChar(80)
-  nascimento    DateTime?    @db.Date
+  id            Int       @id @default(autoincrement())
+  nome          String    @db.VarChar(150)
+  nacionalidade String?   @db.VarChar(80)
+  nascimento    DateTime? @db.Date
 
   livros LivroAutor[]
 
@@ -64,7 +64,7 @@ model LivroAutor {
 }
 
 model Usuario {
-  id        Int         @id @default(autoincrement())
+  id        String      @id @default(uuid())
   nome      String      @db.VarChar(150)
   email     String      @unique @db.VarChar(255)
   senha     String      @db.VarChar(255)
@@ -81,7 +81,7 @@ model Usuario {
 model Emprestimo {
   id             Int       @id @default(autoincrement())
   livroId        Int       @map("livro_id")
-  usuarioId      Int       @map("usuario_id")
+  usuarioId      String    @map("usuario_id")
   dataEmprestimo DateTime  @map("data_emprestimo") @db.Date
   dataPrevista   DateTime  @map("data_prevista") @db.Date
   dataDevolucao  DateTime? @map("data_devolucao") @db.Date
