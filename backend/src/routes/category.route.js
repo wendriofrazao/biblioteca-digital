@@ -17,11 +17,13 @@ categoryRouter.post(
 
 categoryRouter.get(
   "/",
+  authMiddlewarer,
   categoryController.getAllCategories.bind(categoryController),
 );
 
 categoryRouter.get(
   "/:id",
+  authMiddlewarer,
   categoryController.getCategoryById.bind(categoryController),
 );
 

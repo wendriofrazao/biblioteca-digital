@@ -3,6 +3,7 @@ import { authRouter } from "./auth.route.js";
 import { categoryRouter } from "./category.route.js";
 import { authorRouter } from "./author.route.js";
 import { bookRouter } from "./book.route.js";
+import { loanRouter } from "./loan.route.js";
 
 export const router = Router();
 
@@ -17,3 +18,4 @@ router.use("/user", authRouter);
 router.use("/category", categoryRouter);
 router.use("/author", authorRouter);
 router.use("/book", bookRouter);
+router.use("/loan", loanRouter);

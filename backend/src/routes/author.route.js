@@ -15,9 +15,9 @@ authorRouter.post(
   authorController.createAuthor.bind(authorController),
 );
 
-authorRouter.get("/", authorController.getAllAuthors.bind(authorController));
+authorRouter.get("/", authMiddlewarer, authorController.getAllAuthors.bind(authorController));
 
-authorRouter.get("/:id", authorController.getAuthorById.bind(authorController));
+authorRouter.get("/:id", authMiddlewarer, authorController.getAuthorById.bind(authorController));
 
 authorRouter.put(
   "/:id",
