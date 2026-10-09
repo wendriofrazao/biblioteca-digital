@@ -5,6 +5,7 @@ import { authorRouter } from "./author.route.js";
 import { bookRouter } from "./book.route.js";
 import { loanRouter } from "./loan.route.js";
 import { bookAuthorRouter } from "./bookAuthor.route.js";
+import { redBlackTreeRouter } from "./redBlackTree.routes.js";
 
 export const router = Router();
 
@@ -21,3 +22,4 @@ router.use("/author", authorRouter);
 router.use("/book", bookRouter);
 router.use("/loan", loanRouter);
 router.use("/book-author", bookAuthorRouter);
+router.use("/tree", redBlackTreeRouter);

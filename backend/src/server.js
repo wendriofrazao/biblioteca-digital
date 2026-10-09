@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { router } from "./routes/router.js";
 import { ConnectionDB } from "./configs/dbConnecting.js";
+import { BookService } from "./services/book.service.js";
 
 dotenv.config();
 
@@ -19,12 +20,24 @@ app.use(
 
 app.use(router);
 
-ConnectionDB()
-  .then(() => {
-    app.listen(process.env.PORT, () => {
-      console.log(`Servidor rodando! -> http://localhost:${process.env.PORT}`);
+const startServer = async () => {
+  try {
+    await ConnectionDB();
+
+    const bookService = new BookService();
+    const quantidade = await bookService.sincronizarArvore();
+
+    console.log(`${quantidade} livros carregados na Árvore Rubro-Negra`);
+
+    const PORT = process.env.PORT || 3000;
+
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando! -> http://localhost:${PORT}`);
     });
-  })
-  .catch((error) => {
-    console.error("Erro acontecido (server.js):", error);
-  });
+  } catch (error) {
+    console.error("Erro ao iniciar servidor:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

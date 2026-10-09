@@ -1,8 +1,23 @@
 import { BookRepository } from "../repository/book.repository.js";
+import { bookTree } from "../structures/redBlackTree/bookTree.js";
 
 const bookRepository = new BookRepository();
 
 export class BookService {
+  async sincronizarArvore() {
+    const livros = await bookRepository.getAllBooksRepository();
+
+    bookTree.clear();
+
+    for (const livro of livros) {
+      bookTree.insert(Number(livro.id), livro);
+    }
+
+    console.log(`${livros.length} livros carregados na Árvore Rubro-Negra`);
+
+    return livros.length;
+  }
+
   async createBookService(data) {
     const {
       isbn,
@@ -29,43 +44,43 @@ export class BookService {
     if (
       quantidade === undefined ||
       quantidade === null ||
-      quantidade < 0
+      Number(quantidade) < 0
     ) {
       throw new Error("A quantidade deve ser maior ou igual a zero");
     }
 
-    const bookExists =
-      await bookRepository.getBookByIsbnRepository(
-        isbn.trim(),
-      );
+    const bookExists = await bookRepository.getBookByIsbnRepository(
+      isbn.trim(),
+    );
 
     if (bookExists) {
       throw new Error("Já existe um livro com esse ISBN");
     }
 
-    const autoresData = autores?.map((autorId) => ({
+    const autoresData = (autores ?? []).map((autorId) => ({
       autor: {
         connect: {
           id: Number(autorId),
         },
       },
-    })) || [];
+    }));
 
-    return await bookRepository.createBookRepository({
+    const livro = await bookRepository.createBookRepository({
       isbn: isbn.trim(),
       categoriaId: Number(categoriaId),
       titulo: titulo.trim(),
       editora: editora?.trim() || null,
-      anoPublicacao: anoPublicacao
-        ? Number(anoPublicacao)
-        : null,
+      anoPublicacao: anoPublicacao ? Number(anoPublicacao) : null,
       quantidade: Number(quantidade),
       disponiveis: Number(quantidade),
-
       autores: {
         create: autoresData,
       },
     });
+
+    await this.sincronizarArvore();
+
+    return livro;
   }
 
   async getAllBooksService() {
@@ -73,8 +88,7 @@ export class BookService {
   }
 
   async getBookByIdService(id) {
-    const book =
-      await bookRepository.getBookByIdRepository(id);
+    const book = await bookRepository.getBookByIdRepository(Number(id));
 
     if (!book) {
       throw new Error("Livro não encontrado");
@@ -84,8 +98,9 @@ export class BookService {
   }
 
   async updateBookService(id, data) {
-    const book =
-      await bookRepository.getBookByIdRepository(id);
+    id = Number(id);
+
+    const book = await bookRepository.getBookByIdRepository(id);
 
     if (!book) {
       throw new Error("Livro não encontrado");
@@ -109,15 +124,11 @@ export class BookService {
       throw new Error("O título do livro é obrigatório");
     }
 
-    const bookWithSameIsbn =
-      await bookRepository.getBookByIsbnRepository(
-        isbn.trim(),
-      );
+    const bookWithSameIsbn = await bookRepository.getBookByIsbnRepository(
+      isbn.trim(),
+    );
 
-    if (
-      bookWithSameIsbn &&
-      bookWithSameIsbn.id !== id
-    ) {
+    if (bookWithSameIsbn && bookWithSameIsbn.id !== id) {
       throw new Error("Já existe outro livro com esse ISBN");
     }
 
@@ -126,25 +137,20 @@ export class BookService {
       categoriaId: Number(categoriaId),
       titulo: titulo.trim(),
       editora: editora?.trim() || null,
-      anoPublicacao: anoPublicacao
-        ? Number(anoPublicacao)
-        : null,
+      anoPublicacao: anoPublicacao ? Number(anoPublicacao) : null,
     };
 
     if (quantidade !== undefined) {
       const novaQuantidade = Number(quantidade);
 
-      if (novaQuantidade < 0) {
+      if (!Number.isInteger(novaQuantidade) || novaQuantidade < 0) {
         throw new Error(
-          "A quantidade deve ser maior ou igual a zero",
+          "A quantidade deve ser um número inteiro maior ou igual a zero",
         );
       }
 
-      const diferenca =
-        novaQuantidade - book.quantidade;
-
-      const novasDisponiveis =
-        book.disponiveis + diferenca;
+      const diferenca = novaQuantidade - book.quantidade;
+      const novasDisponiveis = book.disponiveis + diferenca;
 
       if (novasDisponiveis < 0) {
         throw new Error(
@@ -159,7 +165,6 @@ export class BookService {
     if (autores !== undefined) {
       updateData.autores = {
         deleteMany: {},
-
         create: autores.map((autorId) => ({
           autor: {
             connect: {
@@ -170,15 +175,20 @@ export class BookService {
       };
     }
 
-    return await bookRepository.updateBookRepository(
+    const livroAtualizado = await bookRepository.updateBookRepository(
       id,
       updateData,
     );
+
+    await this.sincronizarArvore();
+
+    return livroAtualizado;
   }
 
   async deleteBookService(id) {
-    const book =
-      await bookRepository.getBookByIdRepository(id);
+    id = Number(id);
+
+    const book = await bookRepository.getBookByIdRepository(id);
 
     if (!book) {
       throw new Error("Livro não encontrado");
@@ -190,6 +200,10 @@ export class BookService {
       );
     }
 
-    return await bookRepository.deleteBookRepository(id);
+    const resultado = await bookRepository.deleteBookRepository(id);
+
+    await this.sincronizarArvore();
+
+    return resultado;
   }
 }

@@ -7,9 +7,20 @@ export class AuthRepository {
         where: {
           id: userId,
         },
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          matricula: true,
+          tipo: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     } catch (error) {
-      throw new Error(`Erro ao buscar usuário por id (repository): ${error}`);
+      throw new Error(
+        `Erro ao buscar usuário por id (repository): ${error.message}`,
+      );
     }
   }
 
