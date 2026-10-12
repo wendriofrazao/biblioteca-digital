@@ -10,8 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.55.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-hot-toast": "^2.6.1",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.18.4",
+    "sonner": "^2.0.8"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
