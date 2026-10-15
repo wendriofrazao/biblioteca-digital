@@ -1,3 +1,5 @@
+import "../styles/components/QuoteCard.css";
+
 export function QuoteCard({ livro, fade, onVirar }) {
   return (
     <div className="card quote-card">

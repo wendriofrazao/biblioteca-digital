@@ -1,0 +1,35 @@
+.hero {
+  text-align: center;
+}
+
+.hero-note {
+  font-family: 'Reenie Beanie', cursive;
+  font-size: 1.5rem;
+  color: #c85a32;
+  transform: rotate(-2deg);
+  display: inline-block;
+  user-select: none;
+  margin-bottom: 0.5rem;
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2.25rem, 6vw, 3rem);
+  font-weight: 600;
+  color: #1b4958;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.hero-title span {
+  color: #9e2a2b;
+}
+
+.hero-sub {
+  color: #78736c;
+  font-size: 0.875rem;
+  font-weight: 300;
+  max-width: 20rem;
+  margin: 0 auto;
+}

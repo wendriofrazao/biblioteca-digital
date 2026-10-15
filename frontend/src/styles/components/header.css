@@ -1,0 +1,81 @@
+.header {
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.logo-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: #9e2a2b;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover .logo-dot {
+  transform: scale(1.25);
+}
+
+.logo-text {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #1b4958;
+}
+
+.logo-accent {
+  color: #9e2a2b;
+}
+
+.btn-entrar {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 73, 88, 0.2);
+  color: #1b4958;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-entrar:hover {
+  background: #1b4958;
+  color: #fff;
+}
+
+.btn-entrar i {
+  font-size: 9px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-registrar {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  color: #1b4958;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-registrar:hover {
+  color: #9e2a2b;
+  background: rgba(158, 42, 43, 0.06);
+}

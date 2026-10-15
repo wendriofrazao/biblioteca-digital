@@ -1,0 +1,131 @@
+.shelf-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.spines {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.spine {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+  cursor: pointer;
+  position: relative;
+}
+
+.spine:hover {
+  transform: translateY(-14px) rotateZ(-2deg) scale(1.05);
+  box-shadow: -8px 16px 28px -8px rgba(27, 73, 88, 0.2);
+  z-index: 5;
+}
+
+.spine.active {
+  transform: translateY(-18px) scale(1.08);
+  box-shadow: 0 20px 32px -10px rgba(158, 42, 43, 0.22);
+  z-index: 10;
+}
+
+.spine.active::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #9e2a2b;
+  box-shadow: 0 0 0 3px rgba(158, 42, 43, 0.18);
+}
+
+.spine-face {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  border-radius: 6px;
+  box-shadow:
+    inset -2px 0 5px rgba(0, 0, 0, 0.2),
+    inset 1px 0 2px rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.375rem;
+  width: 2.5rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.7rem;
+  color: #fff;
+}
+
+@media (min-width: 640px) {
+  .spine-face {
+    width: 2.75rem;
+    font-size: 0.75rem;
+  }
+  .spines {
+    gap: 1rem;
+  }
+}
+
+.spine-face .num {
+  opacity: 0.4;
+  font-size: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.spine-face .title {
+  letter-spacing: 0.12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-height: 70%;
+}
+
+.spine-face .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.spine-petroleo { background: #1b4958; color: #fef3c7; }
+.spine-rubro { background: #9e2a2b; color: #fff1f2; }
+.spine-oliva { background: #3e5c52; color: #ecfdf5; }
+.spine-terracota { background: #c85a32; color: #fff7ed; }
+
+.spine-tall { height: 10rem; }
+.spine-medium { height: 9rem; }
+.spine-taller { height: 11rem; }
+.spine-short { height: 9.5rem; }
+
+@media (min-width: 640px) {
+  .spine-tall { height: 11rem; }
+  .spine-medium { height: 10rem; }
+  .spine-taller { height: 12rem; }
+  .spine-short { height: 10.5rem; }
+}
+
+.spine-hide-mobile {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .spine-hide-mobile {
+    display: block;
+  }
+}
+
+.shelf-base {
+  width: 100%;
+  max-width: 20rem;
+  height: 7px;
+  background: linear-gradient(to bottom, #e5e0d8, #d4cec4);
+  border-radius: 2px;
+  box-shadow: 0 3px 10px rgba(43, 40, 37, 0.05);
+}

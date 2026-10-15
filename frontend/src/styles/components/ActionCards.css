@@ -1,0 +1,71 @@
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  min-width: 0;
+  min-height: 4rem;
+  padding: 0.875rem 0.5rem;
+
+  text-align: center;
+  border-radius: 1.5rem 2rem 1.25rem 1.75rem;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.25s ease;
+}
+
+.action-card:nth-child(2) {
+  border-radius: 1.75rem 1.25rem 2rem 1.5rem;
+}
+
+.action-card:active {
+  transform: scale(0.95);
+}
+
+.action-card i {
+  display: block;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: #1b4958;
+  margin: 0;
+  transition: color 0.25s ease;
+}
+
+.action-card:hover i {
+  color: #9e2a2b;
+}
+
+.action-card span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 500;
+  color: #1b4958;
+}
+
+@media (max-width: 360px) {
+  .actions {
+    gap: 0.5rem;
+  }
+
+  .action-card {
+    padding: 0.75rem 0.25rem;
+  }
+
+  .action-card span {
+    font-size: 10px;
+  }
+}

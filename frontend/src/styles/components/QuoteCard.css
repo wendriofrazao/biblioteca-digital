@@ -1,0 +1,93 @@
+.quote-card {
+  width: 100%;
+  max-width: 28rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: 1.75rem 1.25rem 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: softFloat 6s ease-in-out infinite;
+}
+
+@keyframes softFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.quote-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quote-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c85a32;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.quote-label i {
+  font-size: 8px;
+}
+
+.btn-virar {
+  font-size: 10px;
+  color: #78736c;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  border: 1px solid #e5e0d8;
+  transition: all 0.25s ease;
+}
+
+.btn-virar:hover {
+  color: #9e2a2b;
+  border-color: rgba(158, 42, 43, 0.3);
+}
+
+.btn-virar:active {
+  transform: scale(0.95);
+}
+
+.btn-virar i {
+  font-size: 9px;
+}
+
+.quote-text {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+  color: #1b4958;
+  line-height: 1.55;
+  min-height: 4.5rem;
+  transition: opacity 0.25s ease;
+}
+
+.quote-text.fade {
+  opacity: 0;
+}
+
+.quote-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.quote-author {
+  font-weight: 500;
+  color: #2b2825;
+}
+
+.quote-book {
+  color: #78736c;
+  font-style: italic;
+}

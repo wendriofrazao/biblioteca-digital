@@ -1,0 +1,36 @@
+.footer {
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #78736c;
+  border-top: 1px solid rgba(229, 224, 216, 0.5);
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9e2a2b;
+}
+
+.footer-name {
+  font-weight: 500;
+  color: #1b4958;
+}
+
+.footer-note {
+  font-family: 'Reenie Beanie', cursive;
+  font-size: 1rem;
+  color: #c85a32;
+}

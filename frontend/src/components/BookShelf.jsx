@@ -1,3 +1,5 @@
+import "../styles/components/BookShelf.css";
+
 export function BookShelf({ livros, ativo, onSelect }) {
   return (
     <>

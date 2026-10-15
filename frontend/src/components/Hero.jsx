@@ -1,3 +1,5 @@
+import "../styles/components/Hero.css";
+
 export function Hero() {
   return (
     <div className="hero">
