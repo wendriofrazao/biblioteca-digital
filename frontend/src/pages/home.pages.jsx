@@ -11,6 +11,7 @@ export function Home() {
   const [indice, setIndice] = useState(0);
   const [modalAberto, setModalAberto] = useState(null);
   const [toast, setToast] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const [fade, setFade] = useState(false);
 
   const livroAtual = livros[indice];
@@ -43,22 +44,54 @@ export function Home() {
   const abrirCadastro = () => setModalAberto("cadastro");
   const fecharModal = () => setModalAberto(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    fecharModal();
-    setToast(true);
+    const form = e.currentTarget;
+    const dados = new FormData(form);
 
-    setTimeout(() => setToast(false), 2500);
+    try {
+      setCarregando(true);
+      setToast("");
+
+      await signIn(dados.get("email"), dados.get("senha"));
+
+      form.reset();
+      fecharModal();
+      setToast("Login realizado com sucesso!");
+    } catch (error) {
+      setToast(error.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
-  const handleCadastro = (e) => {
+  const handleCadastro = async (e) => {
     e.preventDefault();
 
-    fecharModal();
-    setToast(true);
+    const form = e.currentTarget;
+    const dados = new FormData(form);
 
-    setTimeout(() => setToast(false), 2500);
+    try {
+      setCarregando(true);
+      setToast("");
+
+      const nome = dados.get("nome");
+      const email = dados.get("email");
+      const matricula = dados.get("matricula");
+      const senha = dados.get("senha");
+
+      await signUp(nome, email, matricula, senha);
+      await signIn(email, senha);
+
+      form.reset();
+      fecharModal();
+      setToast("Conta criada e login realizado com sucesso!");
+    } catch (error) {
+      setToast(error.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (

@@ -132,9 +132,10 @@ a {
   transform: translateX(2px);
 }
 
+
 .toast {
   position: fixed;
-  bottom: 1.5rem;
+  top: 5rem;
   left: 50%;
   transform: translateX(-50%);
   background: #1b4958;
@@ -144,7 +145,7 @@ a {
   font-size: 0.75rem;
   font-weight: 500;
   box-shadow: 0 8px 24px rgba(27, 73, 88, 0.25);
-  z-index: 60;
+  z-index: 9999;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -159,8 +160,9 @@ a {
 @keyframes toastIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(12px);
+    transform: translateX(-50%) translateY(-12px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);

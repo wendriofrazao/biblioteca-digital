@@ -43,7 +43,7 @@ export class AuthController {
 
   async registerController(req, res) {
     try {
-      const { nome, email, matricula, tipo, senha } = req.body;
+      const { nome, email, matricula, senha } = req.body;
 
       for (let [field, value] of Object.entries(req.body)) {
         if (!value) {
@@ -58,8 +58,7 @@ export class AuthController {
         nome,
         email,
         matricula,
-        tipo,
-        senha,
+        senha
       };
       const user = await this.authService.registerService(data);
 
