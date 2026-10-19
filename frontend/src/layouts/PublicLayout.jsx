@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+
 import { Header } from "../components/Header.jsx";
 import { Footer } from "../components/Footer.jsx";
 import { LoginModal } from "../components/LoginModal.jsx";
 import { RegisterModal } from "../components/RegisterModal.jsx";
+
 import { signIn, signUp } from "../service/auth.service.jsx";
 
 export function PublicLayout() {
+  const navigate = useNavigate();
+
   const [modalAberto, setModalAberto] = useState(null);
   const [toast, setToast] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -21,17 +25,20 @@ export function PublicLayout() {
     const form = e.currentTarget;
     const dados = new FormData(form);
 
+    const email = dados.get("email");
+    const senha = dados.get("senha");
+
     try {
       setCarregando(true);
       setToast("");
 
-      await signIn(dados.get("email"), dados.get("senha"));
+      await signIn(email, senha);
 
       form.reset();
       fecharModal();
-      setToast("Login realizado com sucesso!");
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      setToast(error.message);
+      setToast(error.message || "Não foi possível realizar o login.");
     } finally {
       setCarregando(false);
     }
@@ -43,23 +50,23 @@ export function PublicLayout() {
     const form = e.currentTarget;
     const dados = new FormData(form);
 
+    const nome = dados.get("nome");
+    const email = dados.get("email");
+    const matricula = dados.get("matricula");
+    const senha = dados.get("senha");
+
     try {
       setCarregando(true);
       setToast("");
-
-      const nome = dados.get("nome");
-      const email = dados.get("email");
-      const matricula = dados.get("matricula");
-      const senha = dados.get("senha");
 
       await signUp(nome, email, matricula, senha);
       await signIn(email, senha);
 
       form.reset();
       fecharModal();
-      setToast("Conta criada e login realizado com sucesso!");
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      setToast(error.message);
+      setToast(error.message || "Não foi possível criar a conta.");
     } finally {
       setCarregando(false);
     }

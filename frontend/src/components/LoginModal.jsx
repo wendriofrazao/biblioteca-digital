@@ -45,7 +45,7 @@ export function LoginModal({ aberto, onFechar, onSubmit, onAbrirCadastro }) {
 
         <form className="modal-form" onSubmit={onSubmit}>
           <div className="form-group">
-            <label htmlFor="matricula">Email</label>
+            <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
