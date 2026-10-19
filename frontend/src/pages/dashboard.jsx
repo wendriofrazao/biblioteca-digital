@@ -4,7 +4,7 @@ import { getDashboardData } from "../service/dashboard.service.jsx";
 import { useAuth } from "../context/auth.context.jsx";
 
 export function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, loadUser, signOut } = useAuth();
 
   const [dados, setDados] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +17,10 @@ export function Dashboard() {
       try {
         setLoading(true);
         setErro("");
+
+        if (!user && !authLoading) {
+          await loadUser();
+        }
 
         const resultado = await getDashboardData();
 
@@ -39,9 +43,9 @@ export function Dashboard() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [user, authLoading, loadUser]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return <p>Carregando dados da biblioteca...</p>;
   }
 
@@ -49,7 +53,7 @@ export function Dashboard() {
     return (
       <section>
         <p>Não foi possível carregar a dashboard: {erro}</p>
-        <button onClick={() => window.location.reload()}>
+        <button type="button" onClick={() => window.location.reload()}>
           Tentar novamente
         </button>
       </section>
@@ -57,12 +61,17 @@ export function Dashboard() {
   }
 
   const usuario = {
-    nome: user?.nome ?? user?.name ?? "Usuário",
-    tipo: user?.tipo ?? user?.role ?? "Usuário",
-    matricula: user?.matricula ?? "",
+    nome:
+      user?.nome ||
+      user?.name ||
+      user?.nomeCompleto ||
+      user?.username ||
+      "Usuário",
+    tipo: user?.role || user?.tipo || user?.tipoUsuario || "Usuário",
+    matricula: user?.matricula || "",
   };
 
   return (
-    <BibliotecaDashboard usuario={usuario} dados={dados} onSair={logout} />
+    <BibliotecaDashboard usuario={usuario} dados={dados} onSair={signOut} />
   );
 }
