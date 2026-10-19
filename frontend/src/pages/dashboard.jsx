@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BibliotecaDashboard } from "../components/BibliotecaDashboard.jsx";
 import { getDashboardData } from "../service/dashboard.service.jsx";
 import { useAuth } from "../context/auth.context.jsx";
+import { HeaderDashboard } from "../components/HeaderDashboard.jsx";
 
 export function Dashboard() {
   const { user, loading: authLoading, loadUser, signOut } = useAuth();
@@ -61,14 +62,14 @@ export function Dashboard() {
   }
 
   const usuario = {
-    nome:
-      user?.nome ||
-      "Usuário",
+    nome: user?.nome || "Usuário",
     tipo: user?.tipo || "Usuário",
     matricula: user?.matricula || "",
   };
 
   return (
-    <BibliotecaDashboard usuario={usuario} dados={dados} onSair={signOut} />
+    <>
+      <BibliotecaDashboard usuario={usuario} dados={dados} onSair={signOut} />
+    </>
   );
 }

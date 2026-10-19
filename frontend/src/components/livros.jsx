@@ -1,31 +1,47 @@
+
 export const livros = [
   {
-    text: "“Uma noite destas, vindo da cidade para o Engenho Novo, encontrei no trem da Central um rapaz aqui do bairro...”",
-    author: "Machado de Assis",
     book: "Dom Casmurro",
-    color: "petroleo",
-    height: "tall",
-  },
-  {
-    text: "“O cortiço era uma colmeia fervilhante de vidas, vozes e aromas sob o sol escaldante do meio-dia.”",
-    author: "Aluísio Azevedo",
-    book: "O Cortiço",
-    color: "rubro",
-    height: "medium",
-  },
-  {
-    text: "“Tudo no mundo começou com um sim. Uma molécula disse sim a outra molécula e nasceu a vida.”",
-    author: "Clarice Lispector",
-    book: "A Hora da Estrela",
-    color: "oliva",
-    height: "taller",
-  },
-  {
-    text: "“Ao vencedor as batatas! Não há morte. O encontro de duas expansões, ou a expansão de duas formas, é a vida.”",
     author: "Machado de Assis",
-    book: "Memórias Póstumas",
+    year: "1899",
+    description:
+      "Bentinho revive o passado para decidir se Capitu o traiu.",
+    color: "azul",
+    hexColor: "#35596b",
+    height: "alto",
+    width: "largo",
+  },
+  {
+    book: "O Cortiço",
+    author: "Aluísio Azevedo",
+    year: "1890",
+    description:
+      "Um cortiço do Rio de Janeiro cresce, ferve e engole quem vive nele.",
     color: "terracota",
-    height: "short",
-    hideOnMobile: true,
+    hexColor: "#a8503f",
+    height: "baixo",
+    width: "estreito",
+  },
+  {
+    book: "A Hora da Estrela",
+    author: "Clarice Lispector",
+    year: "1977",
+    description:
+      "Macabéa, uma datilógrafa nordestina no Rio, vista por um narrador inquieto.",
+    color: "salvia",
+    hexColor: "#5d7358",
+    height: "alto",
+    width: "largo",
+  },
+  {
+    book: "Memórias Póstumas de Brás Cubas",
+    author: "Machado de Assis",
+    year: "1881",
+    description:
+      "Um defunto autor conta a própria vida com ironia e sem pressa.",
+    color: "marrom",
+    hexColor: "#96602f",
+    height: "medio",
+    width: "medio",
   },
 ];

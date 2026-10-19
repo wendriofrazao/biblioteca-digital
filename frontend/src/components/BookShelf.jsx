@@ -1,43 +1,54 @@
+
 import "../styles/components/BookShelf.css";
 
 export function BookShelf({ livros, ativo, onSelect }) {
   return (
-    <>
-      <div className="spines">
+    <div className="shelf">
+      <div className="books-container">
         {livros.map((livro, i) => (
-          <div
-            key={i}
-            className={[
-              'spine',
-              ativo === i ? 'active' : '',
-              livro.hideOnMobile ? 'spine-hide-mobile' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+          <button
+            key={livro.book}
+            type="button"
+            className={`book ${ativo === i ? "selected" : ""}`}
+            style={{
+              "--c": livro.hexColor,
+              "--h":
+                livro.height === "alto"
+                  ? i === 2
+                    ? "212px"
+                    : "222px"
+                  : livro.height === "baixo"
+                    ? "188px"
+                    : "196px",
+              "--w":
+                livro.width === "largo"
+                  ? i === 2
+                    ? "56px"
+                    : "58px"
+                  : livro.width === "estreito"
+                    ? "50px"
+                    : "52px",
+            }}
             onClick={() => onSelect(i)}
+            aria-pressed={ativo === i}
+            aria-label={`${livro.book}, ${livro.author}`}
             title={livro.book}
           >
-            <div
-              className={`spine-face spine-${livro.color} spine-${livro.height}`}
-            >
-              <span className="num">{String(i + 1).padStart(2, '0')}</span>
-              <span className="title">{livro.book}</span>
-              <span
-                className="dot"
-                style={{
-                  background:
-                    livro.color === 'rubro'
-                      ? '#faf8f5'
-                      : livro.color === 'oliva'
-                        ? '#c85a32'
-                        : '#e8c547',
-                }}
-              />
-            </div>
-          </div>
+            <span className="band t" />
+            <span className="band t2" />
+            <span className="band b2" />
+            <span className="band b" />
+
+            <span className="plate">
+              <span>{livro.book}</span>
+            </span>
+
+            <span className="mark" />
+          </button>
         ))}
+
+        <div className="board" />
       </div>
-      <div className="shelf-base" />
-    </>
-  )
+    </div>
+  );
 }

@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/auth.context.jsx";
+import { HeaderDashboard } from "../components/HeaderDashboard.jsx";
 
 export function PrivateRoute() {
   const { user, loading } = useAuth();
@@ -12,5 +13,10 @@ export function PrivateRoute() {
     return <Navigate to="/" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <HeaderDashboard />
+      <Outlet />;
+    </>
+  );
 }

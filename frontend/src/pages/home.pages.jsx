@@ -45,7 +45,6 @@ export function Home() {
 
         <section className="shelf-section">
           <BookShelf livros={livros} ativo={indice} onSelect={mudarLivro} />
-
           <QuoteCard livro={livroAtual} fade={fade} onVirar={sortear} />
         </section>
 
