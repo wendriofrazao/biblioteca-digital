@@ -10,7 +10,7 @@ export function Home() {
   const [indice, setIndice] = useState(0);
   const [fade, setFade] = useState(false);
 
-  const { abrirLogin, abrirCadastro } = useOutletContext();
+  const { abrirLogin } = useOutletContext();
 
   const livroAtual = livros[indice];
 

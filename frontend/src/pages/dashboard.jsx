@@ -63,11 +63,8 @@ export function Dashboard() {
   const usuario = {
     nome:
       user?.nome ||
-      user?.name ||
-      user?.nomeCompleto ||
-      user?.username ||
       "Usuário",
-    tipo: user?.role || user?.tipo || user?.tipoUsuario || "Usuário",
+    tipo: user?.tipo || "Usuário",
     matricula: user?.matricula || "",
   };
 

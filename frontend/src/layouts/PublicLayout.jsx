@@ -7,9 +7,11 @@ import { LoginModal } from "../components/LoginModal.jsx";
 import { RegisterModal } from "../components/RegisterModal.jsx";
 
 import { signIn, signUp } from "../service/auth.service.jsx";
+import { useAuth } from "../context/auth.context.jsx";
 
 export function PublicLayout() {
   const navigate = useNavigate();
+  const { loadUser } = useAuth();
 
   const [modalAberto, setModalAberto] = useState(null);
   const [toast, setToast] = useState("");
@@ -33,6 +35,7 @@ export function PublicLayout() {
       setToast("");
 
       await signIn(email, senha);
+      await loadUser();
 
       form.reset();
       fecharModal();
@@ -61,6 +64,7 @@ export function PublicLayout() {
 
       await signUp(nome, email, matricula, senha);
       await signIn(email, senha);
+      await loadUser();
 
       form.reset();
       fecharModal();
@@ -110,7 +114,9 @@ export function PublicLayout() {
         <div className="toast" role="status">
           <i
             className={`fa-solid ${
-              toast.includes("sucesso") ? "fa-check" : "fa-circle-exclamation"
+              toast.toLowerCase().includes("sucesso")
+                ? "fa-check"
+                : "fa-circle-exclamation"
             }`}
             aria-hidden="true"
           />

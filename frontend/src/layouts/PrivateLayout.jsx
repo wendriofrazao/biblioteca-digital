@@ -5,7 +5,7 @@ export function PrivateRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <p>Carregando...</p>;
+    return <p>Verificando autenticação...</p>;
   }
 
   if (!user) {
