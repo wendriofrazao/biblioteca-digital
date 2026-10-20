@@ -13,7 +13,7 @@ enum TipoUsuario {
 
 model Categoria {
   id        Int     @id @default(autoincrement())
-  nome      String  @db.VarChar(120)
+  nome      String  @unique @db.VarChar(120)
   descricao String?
 
   livros Livro[]
@@ -22,22 +22,32 @@ model Categoria {
 }
 
 model Livro {
-  id            Int      @id @default(autoincrement())
-  isbn          String   @unique @db.VarChar(20)
-  categoriaId   Int      @map("categoria_id")
-  titulo        String   @db.VarChar(255)
-  editora       String?  @db.VarChar(120)
-  anoPublicacao Int?     @map("ano_publicacao") @db.SmallInt
-  quantidade    Int
-  disponiveis   Int
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id              Int      @id @default(autoincrement())
+  isbn            String   @unique @db.VarChar(20)
+  categoriaId     Int      @map("categoria_id")
+  titulo          String   @db.VarChar(255)
+  editora         String?  @db.VarChar(120)
+  anoPublicacao   Int?     @map("ano_publicacao") @db.SmallInt
+  quantidade      Int      @default(0)
+  disponiveis     Int      @default(0)
+  paginas         Int?
+  edicao          String?  @db.VarChar(50)
+  idioma          String?  @db.VarChar(60)
+  localizacao     String?  @db.VarChar(100)
+  sinopse         String?
+  capaUrl         String?  @map("capa_url") @db.VarChar(500)
+  vezesEmprestado Int      @default(0) @map("vezes_emprestado")
+  tags            String[] @default([])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   categoria   Categoria    @relation(fields: [categoriaId], references: [id])
   autores     LivroAutor[]
   emprestimos Emprestimo[]
 
   @@index([categoriaId])
+  @@index([titulo])
   @@map("livro")
 }
 
@@ -49,6 +59,7 @@ model Autor {
 
   livros LivroAutor[]
 
+  @@index([nome])
   @@map("autor")
 }
 
@@ -60,6 +71,7 @@ model LivroAutor {
   autor Autor @relation(fields: [autorId], references: [id], onDelete: Cascade)
 
   @@id([livroId, autorId])
+  @@index([autorId])
   @@map("livro_autor")
 }
 
@@ -93,5 +105,6 @@ model Emprestimo {
 
   @@index([livroId])
   @@index([usuarioId])
+  @@index([status])
   @@map("emprestimo")
 }

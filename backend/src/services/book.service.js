@@ -1,7 +1,56 @@
+// services/book.service.js
+
 import { BookRepository } from "../repository/book.repository.js";
 import { bookTree } from "../structures/redBlackTree/bookTree.js";
 
 const bookRepository = new BookRepository();
+
+function validarTexto(valor, campo) {
+  if (typeof valor !== "string" || !valor.trim()) {
+    throw new Error(`${campo} é obrigatório`);
+  }
+}
+
+function validarInteiro(valor, campo, minimo = 0) {
+  const numero = Number(valor);
+
+  if (
+    valor === "" ||
+    valor === null ||
+    valor === undefined ||
+    !Number.isInteger(numero) ||
+    numero < minimo
+  ) {
+    throw new Error(
+      `${campo} deve ser um número inteiro maior ou igual a ${minimo}`,
+    );
+  }
+
+  return numero;
+}
+
+function normalizarAutores(autores) {
+  if (autores === undefined) return undefined;
+
+  if (!Array.isArray(autores)) {
+    throw new Error("Os autores devem ser enviados como uma lista de IDs");
+  }
+
+  const ids = autores.map((id) => validarInteiro(id, "ID do autor", 1));
+
+  return [...new Set(ids)];
+}
+
+function montarRelacaoAutores(ids) {
+  return {
+    deleteMany: {},
+    create: ids.map((autorId) => ({
+      autor: {
+        connect: { id: autorId },
+      },
+    })),
+  };
+}
 
 export class BookService {
   async sincronizarArvore() {
@@ -26,55 +75,47 @@ export class BookService {
       editora,
       anoPublicacao,
       quantidade,
-      autores,
+      autores = [],
     } = data;
 
-    if (!isbn || isbn.trim() === "") {
-      throw new Error("O ISBN é obrigatório");
-    }
+    validarTexto(isbn, "O ISBN");
+    validarTexto(titulo, "O título");
 
-    if (!titulo || titulo.trim() === "") {
-      throw new Error("O título do livro é obrigatório");
-    }
+    const categoria = validarInteiro(categoriaId, "A categoria", 1);
+    const total = validarInteiro(quantidade, "A quantidade");
+    const ano =
+      anoPublicacao === "" ||
+      anoPublicacao === null ||
+      anoPublicacao === undefined
+        ? null
+        : validarInteiro(anoPublicacao, "O ano de publicação", 1);
 
-    if (!categoriaId) {
-      throw new Error("A categoria é obrigatória");
-    }
+    const isbnNormalizado = isbn.trim();
+    const tituloNormalizado = titulo.trim();
+    const autoresIds = normalizarAutores(autores);
 
-    if (
-      quantidade === undefined ||
-      quantidade === null ||
-      Number(quantidade) < 0
-    ) {
-      throw new Error("A quantidade deve ser maior ou igual a zero");
-    }
+    const existente =
+      await bookRepository.getBookByIsbnRepository(isbnNormalizado);
 
-    const bookExists = await bookRepository.getBookByIsbnRepository(
-      isbn.trim(),
-    );
-
-    if (bookExists) {
+    if (existente) {
       throw new Error("Já existe um livro com esse ISBN");
     }
 
-    const autoresData = (autores ?? []).map((autorId) => ({
-      autor: {
-        connect: {
-          id: Number(autorId),
-        },
-      },
-    }));
-
     const livro = await bookRepository.createBookRepository({
-      isbn: isbn.trim(),
-      categoriaId: Number(categoriaId),
-      titulo: titulo.trim(),
-      editora: editora?.trim() || null,
-      anoPublicacao: anoPublicacao ? Number(anoPublicacao) : null,
-      quantidade: Number(quantidade),
-      disponiveis: Number(quantidade),
+      isbn: isbnNormalizado,
+      categoriaId: categoria,
+      titulo: tituloNormalizado,
+      editora:
+        typeof editora === "string" && editora.trim() ? editora.trim() : null,
+      anoPublicacao: ano,
+      quantidade: total,
+      disponiveis: total,
       autores: {
-        create: autoresData,
+        create: autoresIds.map((autorId) => ({
+          autor: {
+            connect: { id: autorId },
+          },
+        })),
       },
     });
 
@@ -84,25 +125,25 @@ export class BookService {
   }
 
   async getAllBooksService() {
-    return await bookRepository.getAllBooksRepository();
+    return bookRepository.getAllBooksRepository();
   }
 
   async getBookByIdService(id) {
-    const book = await bookRepository.getBookByIdRepository(Number(id));
+    const livroId = validarInteiro(id, "O ID do livro", 1);
+    const livro = await bookRepository.getBookByIdRepository(livroId);
 
-    if (!book) {
+    if (!livro) {
       throw new Error("Livro não encontrado");
     }
 
-    return book;
+    return livro;
   }
 
   async updateBookService(id, data) {
-    id = Number(id);
+    const livroId = validarInteiro(id, "O ID do livro", 1);
+    const livroAtual = await bookRepository.getBookByIdRepository(livroId);
 
-    const book = await bookRepository.getBookByIdRepository(id);
-
-    if (!book) {
+    if (!livroAtual) {
       throw new Error("Livro não encontrado");
     }
 
@@ -116,91 +157,79 @@ export class BookService {
       autores,
     } = data;
 
-    if (!isbn || isbn.trim() === "") {
-      throw new Error("O ISBN é obrigatório");
-    }
+    validarTexto(isbn, "O ISBN");
+    validarTexto(titulo, "O título");
 
-    if (!titulo || titulo.trim() === "") {
-      throw new Error("O título do livro é obrigatório");
-    }
+    const isbnNormalizado = isbn.trim();
+    const tituloNormalizado = titulo.trim();
+    const categoria = validarInteiro(categoriaId, "A categoria", 1);
 
-    const bookWithSameIsbn = await bookRepository.getBookByIsbnRepository(
-      isbn.trim(),
-    );
+    const existente =
+      await bookRepository.getBookByIsbnRepository(isbnNormalizado);
 
-    if (bookWithSameIsbn && bookWithSameIsbn.id !== id) {
+    if (existente && existente.id !== livroId) {
       throw new Error("Já existe outro livro com esse ISBN");
     }
 
     const updateData = {
-      isbn: isbn.trim(),
-      categoriaId: Number(categoriaId),
-      titulo: titulo.trim(),
-      editora: editora?.trim() || null,
-      anoPublicacao: anoPublicacao ? Number(anoPublicacao) : null,
+      isbn: isbnNormalizado,
+      categoriaId: categoria,
+      titulo: tituloNormalizado,
+      editora:
+        typeof editora === "string" && editora.trim() ? editora.trim() : null,
+      anoPublicacao:
+        anoPublicacao === "" ||
+        anoPublicacao === null ||
+        anoPublicacao === undefined
+          ? null
+          : validarInteiro(anoPublicacao, "O ano de publicação", 1),
     };
 
     if (quantidade !== undefined) {
-      const novaQuantidade = Number(quantidade);
+      const novaQuantidade = validarInteiro(quantidade, "A quantidade");
+      const emprestados = livroAtual.quantidade - livroAtual.disponiveis;
 
-      if (!Number.isInteger(novaQuantidade) || novaQuantidade < 0) {
+      if (novaQuantidade < emprestados) {
         throw new Error(
-          "A quantidade deve ser um número inteiro maior ou igual a zero",
-        );
-      }
-
-      const diferenca = novaQuantidade - book.quantidade;
-      const novasDisponiveis = book.disponiveis + diferenca;
-
-      if (novasDisponiveis < 0) {
-        throw new Error(
-          "A quantidade não pode ser menor que a quantidade de livros emprestados",
+          "A quantidade não pode ser menor que a quantidade de exemplares emprestados",
         );
       }
 
       updateData.quantidade = novaQuantidade;
-      updateData.disponiveis = novasDisponiveis;
+      updateData.disponiveis = novaQuantidade - emprestados;
     }
 
-    if (autores !== undefined) {
-      updateData.autores = {
-        deleteMany: {},
-        create: autores.map((autorId) => ({
-          autor: {
-            connect: {
-              id: Number(autorId),
-            },
-          },
-        })),
-      };
+    const autoresIds = normalizarAutores(autores);
+
+    if (autoresIds !== undefined) {
+      updateData.autores = montarRelacaoAutores(autoresIds);
     }
 
-    const livroAtualizado = await bookRepository.updateBookRepository(
-      id,
+    const atualizado = await bookRepository.updateBookRepository(
+      livroId,
       updateData,
     );
 
     await this.sincronizarArvore();
 
-    return livroAtualizado;
+    return atualizado;
   }
 
   async deleteBookService(id) {
-    id = Number(id);
+    const livroId = validarInteiro(id, "O ID do livro", 1);
+    const livro = await bookRepository.getBookByIdRepository(livroId);
 
-    const book = await bookRepository.getBookByIdRepository(id);
-
-    if (!book) {
+    if (!livro) {
       throw new Error("Livro não encontrado");
     }
 
-    if (book.emprestimos.length > 0) {
+    if (livro.emprestimos.length > 0) {
       throw new Error(
         "Não é possível excluir um livro que possui empréstimos registrados",
       );
     }
 
-    const resultado = await bookRepository.deleteBookRepository(id);
+    const resultado = await bookRepository.deleteBookRepository(livroId);
 
     await this.sincronizarArvore();
 

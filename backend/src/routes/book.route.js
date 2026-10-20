@@ -1,3 +1,5 @@
+// routes/bookRouter.js
+
 import { Router } from "express";
 import { BookController } from "../controllers/book.controller.js";
 import { authMiddlewarer } from "../middlewares/auth.middleware.js";
@@ -6,7 +8,6 @@ import { isAdmin } from "../middlewares/adminMiddleware.js";
 export const bookRouter = Router();
 
 const bookController = new BookController();
-
 const adminMiddleware = [authMiddlewarer, isAdmin];
 
 bookRouter.post(
@@ -15,9 +16,17 @@ bookRouter.post(
   bookController.createBook.bind(bookController),
 );
 
-bookRouter.get("/", authMiddlewarer, bookController.getAllBooks.bind(bookController));
+bookRouter.get(
+  "/",
+  authMiddlewarer,
+  bookController.getAllBooks.bind(bookController),
+);
 
-bookRouter.get("/:id", authMiddlewarer, bookController.getBookById.bind(bookController));
+bookRouter.get(
+  "/:id",
+  authMiddlewarer,
+  bookController.getBookById.bind(bookController),
+);
 
 bookRouter.put(
   "/:id",

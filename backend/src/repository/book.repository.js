@@ -1,111 +1,60 @@
+// repository/book.repository.js
+
 import { prisma } from "../configs/dbConnecting.js";
+
+const incluirDadosLivro = {
+  categoria: true,
+  autores: {
+    include: {
+      autor: true,
+    },
+  },
+};
 
 export class BookRepository {
   async createBookRepository(data) {
-    try {
-      return await prisma.livro.create({
-        data,
-        include: {
-          categoria: true,
-          autores: {
-            include: {
-              autor: true,
-            },
-          },
-        },
-      });
-    } catch (error) {
-      throw new Error(`Erro ao criar livro (repository): ${error.message}`);
-    }
+    return prisma.livro.create({
+      data,
+      include: incluirDadosLivro,
+    });
   }
 
   async getAllBooksRepository() {
-    try {
-      return await prisma.livro.findMany({
-        orderBy: {
-          titulo: "asc",
-        },
-        include: {
-          categoria: true,
-          autores: {
-            include: {
-              autor: true,
-            },
-          },
-        },
-      });
-    } catch (error) {
-      throw new Error(`Erro ao buscar livros (repository): ${error.message}`);
-    }
+    return prisma.livro.findMany({
+      orderBy: {
+        titulo: "asc",
+      },
+      include: incluirDadosLivro,
+    });
   }
 
   async getBookByIdRepository(id) {
-    try {
-      return await prisma.livro.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          categoria: true,
-          autores: {
-            include: {
-              autor: true,
-            },
-          },
-          emprestimos: true,
-        },
-      });
-    } catch (error) {
-      throw new Error(
-        `Erro ao buscar livro por id (repository): ${error.message}`,
-      );
-    }
+    return prisma.livro.findUnique({
+      where: { id },
+      include: {
+        ...incluirDadosLivro,
+        emprestimos: true,
+      },
+    });
   }
 
   async getBookByIsbnRepository(isbn) {
-    try {
-      return await prisma.livro.findUnique({
-        where: {
-          isbn,
-        },
-      });
-    } catch (error) {
-      throw new Error(
-        `Erro ao buscar livro por ISBN (repository): ${error.message}`,
-      );
-    }
+    return prisma.livro.findUnique({
+      where: { isbn },
+    });
   }
 
   async updateBookRepository(id, data) {
-    try {
-      return await prisma.livro.update({
-        where: {
-          id,
-        },
-        data,
-        include: {
-          categoria: true,
-          autores: {
-            include: {
-              autor: true,
-            },
-          },
-        },
-      });
-    } catch (error) {
-      throw new Error(`Erro ao atualizar livro (repository): ${error.message}`);
-    }
+    return prisma.livro.update({
+      where: { id },
+      data,
+      include: incluirDadosLivro,
+    });
   }
 
   async deleteBookRepository(id) {
-    try {
-      return await prisma.livro.delete({
-        where: {
-          id,
-        },
-      });
-    } catch (error) {
-      throw new Error(`Erro ao excluir livro (repository): ${error.message}`);
-    }
+    return prisma.livro.delete({
+      where: { id },
+    });
   }
 }
