@@ -1,4 +1,3 @@
-
 const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 async function request(endpoint) {
@@ -167,7 +166,7 @@ function mapearArvore(response) {
     nos: numero(arvore.nos ?? arvore.totalNos ?? arvore.quantidadeNos),
     altura: numero(arvore.altura),
     alturaNegra: numero(arvore.alturaNegra),
-    raiz: arvore.raiz?.isbn ?? arvore.raiz ?? "-",
+    raiz: arvore?.value ?? arvore.raiz ?? "-",
   };
 }
 

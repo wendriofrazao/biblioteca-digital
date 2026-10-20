@@ -76,6 +76,13 @@ export class BookService {
       anoPublicacao,
       quantidade,
       autores = [],
+      paginas,
+      edicao,
+      idioma,
+      localizacao,
+      sinopse,
+      capaUrl,
+      tags = [],
     } = data;
 
     validarTexto(isbn, "O ISBN");
@@ -83,6 +90,7 @@ export class BookService {
 
     const categoria = validarInteiro(categoriaId, "A categoria", 1);
     const total = validarInteiro(quantidade, "A quantidade");
+
     const ano =
       anoPublicacao === "" ||
       anoPublicacao === null ||
@@ -90,9 +98,26 @@ export class BookService {
         ? null
         : validarInteiro(anoPublicacao, "O ano de publicação", 1);
 
+    const paginasNormalizadas =
+      paginas === "" || paginas === null || paginas === undefined
+        ? null
+        : validarInteiro(paginas, "O número de páginas", 1);
+
     const isbnNormalizado = isbn.trim();
     const tituloNormalizado = titulo.trim();
     const autoresIds = normalizarAutores(autores);
+
+    if (!Array.isArray(tags)) {
+      throw new Error("As tags devem ser enviadas como uma lista.");
+    }
+
+    const tagsNormalizadas = [
+      ...new Set(
+        tags
+          .filter((tag) => typeof tag === "string" && tag.trim())
+          .map((tag) => tag.trim()),
+      ),
+    ];
 
     const existente =
       await bookRepository.getBookByIsbnRepository(isbnNormalizado);
@@ -105,11 +130,35 @@ export class BookService {
       isbn: isbnNormalizado,
       categoriaId: categoria,
       titulo: tituloNormalizado,
+
       editora:
         typeof editora === "string" && editora.trim() ? editora.trim() : null,
+
       anoPublicacao: ano,
       quantidade: total,
       disponiveis: total,
+
+      paginas: paginasNormalizadas,
+
+      edicao:
+        typeof edicao === "string" && edicao.trim() ? edicao.trim() : null,
+
+      idioma:
+        typeof idioma === "string" && idioma.trim() ? idioma.trim() : null,
+
+      localizacao:
+        typeof localizacao === "string" && localizacao.trim()
+          ? localizacao.trim()
+          : null,
+
+      sinopse:
+        typeof sinopse === "string" && sinopse.trim() ? sinopse.trim() : null,
+
+      capaUrl:
+        typeof capaUrl === "string" && capaUrl.trim() ? capaUrl.trim() : null,
+
+      tags: tagsNormalizadas,
+
       autores: {
         create: autoresIds.map((autorId) => ({
           autor: {
