@@ -13,6 +13,49 @@ import {
 } from "lucide-react";
 import "../styles/components/CatalogView.css";
 import { TopHeader } from "../components/TopHeader.jsx";
+import {BookService} from "../service/book.service.jsx";
+
+function mapearLivro(livro) {
+  const autores = (livro.autores ?? [])
+    .map((item) => {
+      const autor = item.autor ?? item;
+      return autor.nome ?? autor.name ?? "";
+    })
+    .filter(Boolean);
+
+  const disponiveis = Number(livro.disponiveis ?? 0);
+
+  return {
+    id: livro.id,
+    code: livro.isbn ?? "",
+    isbn: livro.isbn ?? "",
+    title: livro.titulo ?? "Título não informado",
+    author: autores.join(", ") || "Autor não informado",
+    category:
+      livro.categoria?.nome ??
+      livro.categoria?.nomeCategoria ??
+      livro.categoria?.nome_categoria ??
+      "Sem categoria",
+    publisher: livro.editora ?? "Editora não informada",
+    year: Number(livro.anoPublicacao ?? 0),
+    timesBorrowed: Number(livro.vezesEmprestado ?? 0),
+    coverUrl: livro.capaUrl ?? "",
+    availableCopies: disponiveis,
+    status: disponiveis > 0 ? "DISPONÍVEL" : "INDISPONÍVEL",
+    tags: Array.isArray(livro.tags) ? livro.tags : [],
+    dueDate: null,
+    shelfLocation: { corredor: livro.localizacao ?? "Corredor não informado" },
+    paginas: livro.paginas,
+    edicao: livro.edicao,
+    idioma: livro.idioma,
+    sinopse: livro.sinopse,
+    quantidade: Number(livro.quantidade ?? 0),
+    categoriaId: livro.categoriaId,
+    autoresIds: (livro.autores ?? [])
+      .map((item) => item.autorId ?? item.autor?.id ?? item.id)
+      .filter(Boolean),
+  };
+}
 
 export function CatalogView({
   books = [],
@@ -42,6 +85,38 @@ export function CatalogView({
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showPublisherDropdown, setShowPublisherDropdown] = useState(false);
   const [jumpPage, setJumpPage] = useState(String(currentPage));
+  const [apiBooks, setApiBooks] = useState([]);
+  const [loadingBooks, setLoadingBooks] = useState(false);
+  const [bookError, setBookError] = useState("");
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarLivros() {
+      setLoadingBooks(true);
+      setBookError("");
+      try {
+        const resultado = await BookService.getAllBooks();
+        const lista = Array.isArray(resultado)
+          ? resultado
+          : (resultado?.livros ?? resultado?.data ?? []);
+        if (ativo) setApiBooks(lista.map(mapearLivro));
+      } catch (error) {
+        if (ativo) {
+          setBookError(error.message || "Não foi possível carregar os livros.");
+        }
+      } finally {
+        if (ativo) setLoadingBooks(false);
+      }
+    }
+
+    carregarLivros();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const catalogBooks = books.length > 0 ? books : apiBooks;
 
   const categories = [
     "Todas as Áreas",
@@ -70,7 +145,7 @@ export function CatalogView({
 
   const filteredBooks = useMemo(
     () =>
-      books.filter((book) => {
+      catalogBooks.filter((book) => {
         const query = searchTerm.trim().toLowerCase();
         if (
           query &&
@@ -111,7 +186,7 @@ export function CatalogView({
         return true;
       }),
     [
-      books,
+      catalogBooks,
       searchTerm,
       selectedCategory,
       selectedPublisher,
@@ -192,14 +267,14 @@ export function CatalogView({
 
   const bookAction = (book) =>
     book.status === "DISPONÍVEL" ? onBorrowBook?.(book) : onReserveBook?.(book);
-  const coverFallback = (event, book) => {
+  const coverFallback = (event) => {
     event.currentTarget.style.display = "none";
     event.currentTarget.nextElementSibling?.classList.add("visible");
   };
 
   return (
     <main className="catalog-view">
-      <TopHeader/>
+      <TopHeader />
       <section className="catalog-hero">
         <div className="hero-pattern" aria-hidden="true">
           <i />
@@ -213,10 +288,7 @@ export function CatalogView({
             <span>Acervo Geral</span>
             <span>•</span>
             <strong>
-              {books.length === 14
-                ? "1.428"
-                : books.length.toLocaleString("pt-BR")}{" "}
-              Obras Registradas
+              {catalogBooks.length.toLocaleString("pt-BR")} Obras Registradas
             </strong>
           </div>
           <h1>Catálogo do Acervo</h1>
@@ -343,12 +415,7 @@ export function CatalogView({
               {sortedBooks.length ? (page - 1) * perPage + 1 : 0} –{" "}
               {Math.min(page * perPage, sortedBooks.length)}
             </strong>{" "}
-            de{" "}
-            <strong>
-              {books.length === 14
-                ? "1.428"
-                : books.length.toLocaleString("pt-BR")}
-            </strong>{" "}
+            de <strong>{catalogBooks.length.toLocaleString("pt-BR")}</strong>{" "}
             títulos catalogados
           </p>
           <div className="active-tags">
@@ -423,7 +490,18 @@ export function CatalogView({
         </div>
       </section>
 
-      {!currentBooks.length ? (
+      {loadingBooks && catalogBooks.length === 0 && (
+        <p className="catalog-message" role="status">
+          Carregando livros...
+        </p>
+      )}
+      {bookError && catalogBooks.length === 0 && (
+        <p className="catalog-error" role="alert">
+          {bookError}
+        </p>
+      )}
+
+      {!loadingBooks && !bookError && !currentBooks.length ? (
         <section className="empty-state">
           <BookOpen size={45} />
           <h2>Nenhuma obra encontrada</h2>
@@ -435,7 +513,7 @@ export function CatalogView({
             Limpar todos os filtros
           </button>
         </section>
-      ) : (
+      ) : currentBooks.length > 0 ? (
         <section
           className={viewMode === "grid" ? "book-grid" : "book-list"}
           aria-label="Livros do catálogo"
@@ -462,7 +540,7 @@ export function CatalogView({
                     alt={`Capa do livro ${book.title}`}
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    onError={(e) => coverFallback(e, book)}
+                    onError={coverFallback}
                   />
                   <div className="cover-fallback">
                     <span>{book.code}</span>
@@ -570,7 +648,7 @@ export function CatalogView({
             );
           })}
         </section>
-      )}
+      ) : null}
 
       <div className="editorial-divider">
         <span>~ sabedoria que resiste ao tempo ~</span>

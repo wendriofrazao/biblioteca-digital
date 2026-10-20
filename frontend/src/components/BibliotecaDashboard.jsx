@@ -1,8 +1,8 @@
 import { NavLink } from "react-router-dom";
-import { Sidebar } from "./Sidebar";
+import { useState } from "react";
+import { LeftSidebar } from "./Sidebar";
 import { Icon } from "./Icon";
 import "../styles/components/BibliotecaDashboard.css";
-
 
 function Stat({ icon, value, label }) {
   return (
@@ -134,21 +134,30 @@ function DashboardContent({ usuario, dados }) {
   );
 }
 
-
 export function BibliotecaDashboard({
   usuario: usuarioProp,
   dados = dadosExemplo,
   onSair = () => {},
 }) {
   const usuario = usuarioProp ?? {
-    nome: "wendriomelo",
-    tipo: "Administrador",
-    matricula: "MAT-884096",
+    nome: "Usuário",
+    tipo: "USER",
+    matricula: "",
   };
+  const [activeTab, setActiveTab] = useState("painel");
+  const [isOpenMobile, setIsOpenMobile] = useState(false);
 
   return (
     <div className="biblioteca-layout">
-      <Sidebar usuario={usuario} onSair={onSair} />
+      <LeftSidebar
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        user={usuario}
+        loanCount={dados?.emprestimos ?? 0}
+        isOpenMobile={isOpenMobile}
+        onCloseMobile={() => setIsOpenMobile(false)}
+        onSwitchUser={onSair}
+      />
 
       <main className="biblioteca-main">
         <DashboardContent usuario={usuario} dados={dados} />

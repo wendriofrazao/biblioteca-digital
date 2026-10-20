@@ -6,47 +6,47 @@ import {
   ShieldCheck,
   LogOut,
   X,
-  UserCheck,
 } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 import "../styles/components/LeftSidebar.css";
 
 export function LeftSidebar({
   activeTab,
   onSelectTab,
   user,
-  loanCount,
-  isOpenMobile,
-  onCloseMobile,
-  onSwitchUser,
+  loanCount = 0,
+  isOpenMobile = false,
+  onCloseMobile = () => {},
+  onSwitchUser = () => {},
 }) {
-  const handleNavClick = (tab) => {
+const navigate = useNavigate();
+
+  const handleNavClick = (tab, link) => {
     onSelectTab(tab);
+    navigate(link);
     onCloseMobile();
   };
 
   const navItems = [
-    { id: "painel", label: "Painel", Icon: LayoutGrid },
-    { id: "catalogo", label: "Catálogo", Icon: BookOpen },
-    { id: "emprestimos", label: "Empréstimos", Icon: ArrowLeftRight },
-    { id: "arvore", label: "Árvore RB", Icon: GitFork },
-    { id: "administracao", label: "Administração", Icon: ShieldCheck },
+    { id: "painel", label: "Painel", Icon: LayoutGrid, link: "/dashboard" },
+    { id: "emprestimos", label: "Empréstimos", Icon: ArrowLeftRight, link: "/loan" },
+    { id: "arvore", label: "Árvore RB", Icon: GitFork, link: "/arvore" },
   ];
 
-  const renderNavItem = ({ id, label, Icon }) => {
-    const isActive = activeTab === id;
+  const renderNavItem = ({ id, label, Icon, link }) => {
+    const ativo = activeTab === id;
 
     return (
       <button
         key={id}
         type="button"
-        onClick={() => handleNavClick(id)}
-        className={`sidebar-nav-item ${isActive ? "active" : ""}`}
-        aria-current={isActive ? "page" : undefined}
+        onClick={() => handleNavClick(id, link)}
+        className={`sidebar-nav-item ${ativo ? "active" : ""}`}
+        aria-current={ativo ? "page" : undefined}
       >
         <span className="sidebar-nav-label">
           <Icon
-            size={17}
+            size={16}
             strokeWidth={1.75}
             className="sidebar-nav-icon"
           />
@@ -58,7 +58,7 @@ export function LeftSidebar({
             <span className="sidebar-loan-count">{loanCount}</span>
           )}
 
-          {isActive && <span className="sidebar-active-dot" />}
+          {ativo && <span className="sidebar-active-dot" />}
         </span>
       </button>
     );
@@ -76,28 +76,35 @@ export function LeftSidebar({
             className="sidebar-close-button"
             aria-label="Fechar menu"
           >
-            <X size={17} />
+            <X size={16} />
           </button>
         </div>
 
         <nav className="sidebar-nav" aria-label="Menu principal">
-          {navItems.slice(0, 4).map(renderNavItem)}
+          {navItems.map(renderNavItem)}
         </nav>
 
         <div className="sidebar-divider" />
 
         <div className="sidebar-admin">
-          {renderNavItem(navItems[4])}
+          {renderNavItem({
+            id: "administracao",
+            label: "Administração",
+            Icon: ShieldCheck,
+          })}
         </div>
       </div>
 
       <div className="sidebar-user" data-purpose="user-profile">
         <div className="sidebar-user-info">
-          <p className="sidebar-user-name">{user?.name || "Usuário"}</p>
+          <p className="sidebar-user-name">
+            {user?.name ?? user?.nome ?? "Usuário"}
+          </p>
 
           <p className="sidebar-user-details">
-            {user?.role || "Leitor"}
-            {user?.code ? ` · ${user.code}` : ""}
+            {user?.role ?? user?.tipo ?? "Leitor"}
+            {" · "}
+            {user?.code ?? user?.matricula ?? ""}
           </p>
         </div>
 
@@ -128,10 +135,7 @@ export function LeftSidebar({
             aria-label="Fechar menu lateral"
           />
 
-          <aside
-            className="sidebar-mobile-drawer"
-            aria-label="Menu lateral móvel"
-          >
+          <aside className="sidebar-mobile-drawer">
             {sidebarContent}
           </aside>
         </div>

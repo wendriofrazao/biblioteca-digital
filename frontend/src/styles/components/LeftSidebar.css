@@ -1,3 +1,5 @@
+/* Sidebar principal */
+
 .sidebar-desktop {
   position: sticky;
   top: 68px;
@@ -7,7 +9,6 @@
   height: calc(100vh - 68px);
   padding: 24px;
   overflow-y: auto;
-
   background: #f8f5ec;
   border-right: 1px solid rgba(210, 201, 181, 0.7);
 }
@@ -30,7 +31,6 @@
   justify-content: space-between;
   margin-bottom: 16px;
   padding: 0 12px;
-
   color: #92948a;
   font-size: 11px;
   font-weight: 700;
@@ -43,7 +43,6 @@
   align-items: center;
   justify-content: center;
   padding: 4px;
-
   color: #92948a;
   background: transparent;
   border: none;
@@ -55,6 +54,8 @@
   color: #263c2f;
   background: rgba(36, 86, 61, 0.08);
 }
+
+/* Navegação */
 
 .sidebar-nav {
   display: flex;
@@ -70,18 +71,15 @@
   min-height: 42px;
   padding: 10px 14px;
   gap: 10px;
-
   color: #60675f;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 12px;
-
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
-
   transition:
     color 0.2s ease,
     background 0.2s ease,
@@ -140,15 +138,15 @@
   min-width: 19px;
   min-height: 18px;
   padding: 2px 6px;
-
   color: #183e2d;
   background: rgba(36, 86, 61, 0.1);
   border-radius: 999px;
-
   font-family: monospace;
   font-size: 10px;
   font-weight: 700;
 }
+
+/* Administração */
 
 .sidebar-divider {
   height: 1px;
@@ -165,6 +163,8 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Perfil do usuário */
 
 .sidebar-user {
   padding-top: 22px;
@@ -197,18 +197,15 @@
   gap: 10px;
   width: 100%;
   padding: 8px;
-
   color: #60675f;
   background: transparent;
   border: none;
   border-radius: 8px;
-
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
-
   transition: color 0.2s ease, background 0.2s ease;
 }
 
@@ -216,6 +213,8 @@
   color: #a6634b;
   background: rgba(232, 227, 213, 0.5);
 }
+
+/* Acessibilidade */
 
 .sidebar-nav-item:focus-visible,
 .sidebar-close-button:focus-visible,
@@ -225,6 +224,7 @@
 }
 
 /* Menu móvel */
+
 .sidebar-mobile-overlay {
   position: fixed;
   inset: 0;
@@ -236,12 +236,10 @@
   inset: 0;
   width: 100%;
   height: 100%;
-
   background: rgba(30, 35, 31, 0.42);
   backdrop-filter: blur(3px);
   border: none;
   cursor: pointer;
-
   animation: sidebar-fade-in 0.2s ease;
 }
 
@@ -253,10 +251,8 @@
   height: 100%;
   padding: 24px;
   overflow-y: auto;
-
   background: #f8f5ec;
   box-shadow: 12px 0 35px rgba(0, 0, 0, 0.12);
-
   animation: sidebar-slide-in 0.22s ease;
 }
 
@@ -267,6 +263,8 @@
 .sidebar-mobile-drawer .sidebar-close-button {
   display: inline-flex;
 }
+
+/* Animações */
 
 @keyframes sidebar-fade-in {
   from {
@@ -289,6 +287,7 @@
 }
 
 /* Desktop */
+
 @media (min-width: 1024px) {
   .sidebar-desktop {
     display: flex;
@@ -296,11 +295,14 @@
 }
 
 /* Telas menores */
+
 @media (max-width: 380px) {
   .sidebar-mobile-drawer {
     padding: 20px 16px;
   }
 }
+
+/* Movimento reduzido */
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar-backdrop,
