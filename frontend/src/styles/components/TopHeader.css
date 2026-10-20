@@ -1,0 +1,246 @@
+.top-header {
+  width: 100%;
+  min-height: 68px;
+  padding: 14px 48px;
+  display: flex;
+  align-items: center;
+  /* justify-content: center; */
+  /* gap: 35%; */
+
+  background: #f8f5ec;
+  border-bottom: 1px solid rgba(210, 201, 181, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.top-header-brand,
+.top-header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.top-header-brand {
+  gap: 12px;
+  margin-left: 70%;
+}
+
+.top-header-actions {
+  gap: 12px;
+}
+
+.top-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.top-header-logo-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #24563d;
+  transition: transform 0.2s ease;
+}
+
+.top-header-logo:hover .top-header-logo-dot {
+  transform: scale(1.12);
+}
+
+.top-header-logo-text {
+  color: #183e2d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.top-header-logo-accent {
+  color: #bd765b;
+}
+
+.top-header-quote {
+  color: #a6634b;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mobile-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+
+  color: #4d574f;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.mobile-menu-button:hover {
+  color: #183e2d;
+  background: rgba(36, 86, 61, 0.08);
+}
+
+.loans-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+
+  color: #183e2d;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(210, 201, 181, 0.8);
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.loans-button svg {
+  color: #24563d;
+  flex-shrink: 0;
+}
+
+.loans-button:hover,
+.loans-button.active {
+  background: #fff;
+  border-color: #b7c9ba;
+}
+
+.loans-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 2px 6px;
+
+  color: #f8f5ec;
+  background: #24563d;
+  border-radius: 999px;
+
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.catalog-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px;
+
+  color: #4d574f;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.catalog-button:hover,
+.catalog-button.active {
+  color: #183e2d;
+  background: rgba(36, 86, 61, 0.08);
+}
+
+.mobile-menu-button:focus-visible,
+.top-header-logo:focus-visible,
+.loans-button:focus-visible,
+.catalog-button:focus-visible {
+  outline: 2px solid #46785b;
+  outline-offset: 3px;
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .top-header {
+    padding: 14px 24px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 767px) {
+  .top-header {
+    min-height: 62px;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .top-header-brand {
+    gap: 8px;
+  }
+
+  .top-header-logo-text {
+    font-size: 19px;
+  }
+
+  .top-header-quote {
+    display: none;
+  }
+
+  .top-header-actions {
+    gap: 6px;
+  }
+
+  .loans-button {
+    padding: 8px;
+    gap: 5px;
+  }
+
+  .loans-button-label {
+    display: none;
+  }
+
+  .catalog-button {
+    padding: 7px;
+  }
+}
+
+/* Celulares pequenos */
+@media (max-width: 380px) {
+  .top-header {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .top-header-brand {
+    gap: 4px;
+  }
+
+  .top-header-logo-text {
+    font-size: 17px;
+  }
+
+  .top-header-actions {
+    gap: 2px;
+  }
+}
