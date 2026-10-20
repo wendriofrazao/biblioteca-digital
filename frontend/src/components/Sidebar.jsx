@@ -1,6 +1,5 @@
 import {
   LayoutGrid,
-  BookOpen,
   ArrowLeftRight,
   GitFork,
   ShieldCheck,
@@ -19,7 +18,10 @@ export function LeftSidebar({
   onCloseMobile = () => {},
   onSwitchUser = () => {},
 }) {
-const navigate = useNavigate();
+  const navigate = useNavigate();
+
+  const tipoUsuario = String(user?.tipo ?? user?.role ?? "").toUpperCase();
+  const isAdmin = tipoUsuario === "ADMIN";
 
   const handleNavClick = (tab, link) => {
     onSelectTab(tab);
@@ -28,9 +30,24 @@ const navigate = useNavigate();
   };
 
   const navItems = [
-    { id: "painel", label: "Painel", Icon: LayoutGrid, link: "/dashboard" },
-    { id: "emprestimos", label: "Empréstimos", Icon: ArrowLeftRight, link: "/loan" },
-    { id: "arvore", label: "Árvore RB", Icon: GitFork, link: "/arvore" },
+    {
+      id: "painel",
+      label: "Painel",
+      Icon: LayoutGrid,
+      link: "/dashboard",
+    },
+    {
+      id: "emprestimos",
+      label: "Empréstimos",
+      Icon: ArrowLeftRight,
+      link: "/loan",
+    },
+    {
+      id: "arvore",
+      label: "Árvore RB",
+      Icon: GitFork,
+      link: "/arvore",
+    },
   ];
 
   const renderNavItem = ({ id, label, Icon, link }) => {
@@ -45,11 +62,7 @@ const navigate = useNavigate();
         aria-current={ativo ? "page" : undefined}
       >
         <span className="sidebar-nav-label">
-          <Icon
-            size={16}
-            strokeWidth={1.75}
-            className="sidebar-nav-icon"
-          />
+          <Icon size={16} strokeWidth={1.75} className="sidebar-nav-icon" />
           <span>{label}</span>
         </span>
 
@@ -84,15 +97,20 @@ const navigate = useNavigate();
           {navItems.map(renderNavItem)}
         </nav>
 
-        <div className="sidebar-divider" />
+        {isAdmin && (
+          <>
+            <div className="sidebar-divider" />
 
-        <div className="sidebar-admin">
-          {renderNavItem({
-            id: "administracao",
-            label: "Administração",
-            Icon: ShieldCheck,
-          })}
-        </div>
+            <div className="sidebar-admin">
+              {renderNavItem({
+                id: "administracao",
+                label: "Administração",
+                Icon: ShieldCheck,
+                link: "/administracao",
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="sidebar-user" data-purpose="user-profile">
@@ -102,7 +120,7 @@ const navigate = useNavigate();
           </p>
 
           <p className="sidebar-user-details">
-            {user?.role ?? user?.tipo ?? "Leitor"}
+            {isAdmin ? "Administrador" : "Leitor"}
             {" · "}
             {user?.code ?? user?.matricula ?? ""}
           </p>
@@ -135,9 +153,7 @@ const navigate = useNavigate();
             aria-label="Fechar menu lateral"
           />
 
-          <aside className="sidebar-mobile-drawer">
-            {sidebarContent}
-          </aside>
+          <aside className="sidebar-mobile-drawer">{sidebarContent}</aside>
         </div>
       )}
     </>

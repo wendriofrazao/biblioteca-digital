@@ -11,7 +11,7 @@ import { useAuth } from "../context/auth.context.jsx";
 
 export function PublicLayout() {
   const navigate = useNavigate();
-  const { loadUser } = useAuth();
+  const { loadUser, user } = useAuth();
 
   const [modalAberto, setModalAberto] = useState(null);
   const [toast, setToast] = useState("");
@@ -88,7 +88,7 @@ export function PublicLayout() {
 
   return (
     <>
-      <Header onEntrar={abrirLogin} onRegistrar={abrirCadastro} />
+      <Header user={user} onEntrar={abrirLogin} onRegistrar={abrirCadastro} />
 
       <Outlet context={{ abrirLogin, abrirCadastro }} />
 
