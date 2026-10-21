@@ -76,10 +76,10 @@ export function CatalogView({
   setOnlyAvailable = () => {},
   mostPopular = false,
   setMostPopular = () => {},
-  sortBy = "Mais recentes",
-  setSortBy = () => {},
-  viewMode = "grid",
-  setViewMode = () => {},
+  sortBy: sortByProp,
+  setSortBy: setSortByProp,
+  viewMode: viewModeProp,
+  setViewMode: setViewModeProp,
   currentPage: currentPageProp,
   setCurrentPage: setCurrentPageProp,
   activeTags = [],
@@ -95,6 +95,23 @@ export function CatalogView({
   const setCurrentPage = isPaginationControlled
     ? setCurrentPageProp
     : setInternalCurrentPage;
+
+  // Ordenação e modo de visualização funcionam tanto controlados pelo pai
+  // quanto internamente, caso essas propriedades não sejam fornecidas.
+  const [internalSortBy, setInternalSortBy] = useState("Mais recentes");
+  const [internalViewMode, setInternalViewMode] = useState("grid");
+
+  const isSortControlled =
+    sortByProp !== undefined && typeof setSortByProp === "function";
+  const sortBy = isSortControlled ? sortByProp : internalSortBy;
+  const setSortBy = isSortControlled ? setSortByProp : setInternalSortBy;
+
+  const isViewModeControlled =
+    viewModeProp !== undefined && typeof setViewModeProp === "function";
+  const viewMode = isViewModeControlled ? viewModeProp : internalViewMode;
+  const setViewMode = isViewModeControlled
+    ? setViewModeProp
+    : setInternalViewMode;
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showPublisherDropdown, setShowPublisherDropdown] = useState(false);
@@ -236,30 +253,39 @@ export function CatalogView({
     activeTags,
   ]);
 
-  // Ordena os resultados.
+  // Ordena os resultados usando os campos normalizados e os nomes vindos da API.
   const sortedBooks = useMemo(() => {
     const lista = [...filteredBooks];
+    const texto = (valor) => String(valor ?? "").trim();
+    const numero = (valor) => {
+      if (typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
+      const convertido = Number(texto(valor).replace(",", "."));
+      return Number.isFinite(convertido) ? convertido : 0;
+    };
+    const titulo = (book) => texto(book.title ?? book.titulo);
+    const ano = (book) =>
+      numero(book.year ?? book.anoPublicacao ?? book.ano_publicacao);
+    const emprestimos = (book) =>
+      numero(
+        book.timesBorrowed ?? book.vezesEmprestado ?? book.vezes_emprestado,
+      );
 
     if (mostPopular || sortBy === "Mais emprestados") {
-      return lista.sort(
-        (a, b) => (b.timesBorrowed || 0) - (a.timesBorrowed || 0),
-      );
+      return lista.sort((a, b) => emprestimos(b) - emprestimos(a));
     }
 
     if (sortBy === "Mais recentes") {
-      return lista.sort((a, b) => (b.year || 0) - (a.year || 0));
+      return lista.sort((a, b) => ano(b) - ano(a));
     }
 
     if (sortBy === "Ordem alfabética (A-Z)") {
       return lista.sort((a, b) =>
-        String(a.title || "").localeCompare(String(b.title || ""), "pt-BR", {
-          sensitivity: "base",
-        }),
+        titulo(a).localeCompare(titulo(b), "pt-BR", { sensitivity: "base" }),
       );
     }
 
     if (sortBy === "Ano de publicação") {
-      return lista.sort((a, b) => (a.year || 0) - (b.year || 0));
+      return lista.sort((a, b) => ano(a) - ano(b));
     }
 
     return lista;
@@ -668,7 +694,26 @@ export function CatalogView({
           aria-label="Livros do catálogo"
         >
           {currentBooks.map((book) => {
-            const available = book.status === "DISPONÍVEL";
+            const available =
+              book.status === "DISPONÍVEL" ||
+              Number(
+                book.availableCopies ??
+                  book.disponiveis ??
+                  book.quantidade ??
+                  0,
+              ) > 0;
+            const bookTitle =
+              book.title ?? book.titulo ?? "Título não informado";
+            const bookAuthor =
+              book.author ?? book.autor ?? "Autor não informado";
+            const bookCode = book.code ?? book.isbn ?? "";
+            const bookCover = book.coverUrl ?? book.capaUrl ?? "";
+            const bookPublisher =
+              book.publisher ?? book.editora ?? "Editora não informada";
+            const availableCopies = Number(
+              book.availableCopies ?? book.disponiveis ?? book.quantidade ?? 0,
+            );
+            const bookStatus = available ? "DISPONÍVEL" : "INDISPONÍVEL";
 
             return viewMode === "grid" ? (
               <article
@@ -685,10 +730,10 @@ export function CatalogView({
                 }}
               >
                 <div className="cover-frame">
-                  {book.coverUrl && (
+                  {bookCover && (
                     <img
-                      src={book.coverUrl}
-                      alt={`Capa do livro ${book.title}`}
+                      src={bookCover}
+                      alt={`Capa do livro ${bookTitle}`}
                       loading="lazy"
                       referrerPolicy="no-referrer"
                       onError={coverFallback}
@@ -696,13 +741,11 @@ export function CatalogView({
                   )}
 
                   <div
-                    className={`cover-fallback ${
-                      book.coverUrl ? "" : "visible"
-                    }`}
+                    className={`cover-fallback ${bookCover ? "" : "visible"}`}
                   >
-                    <span>{book.code}</span>
-                    <strong>{book.title}</strong>
-                    <em>{book.author}</em>
+                    <span>{bookCode}</span>
+                    <strong>{bookTitle}</strong>
+                    <em>{bookAuthor}</em>
                   </div>
 
                   <span
@@ -710,7 +753,7 @@ export function CatalogView({
                       available ? "available" : "unavailable"
                     }`}
                   >
-                    {book.status}
+                    {bookStatus}
                   </span>
 
                   <div className="cover-overlay">
@@ -727,21 +770,19 @@ export function CatalogView({
                 </div>
 
                 <div className="book-info">
-                  <span className="book-code">{book.code}</span>
+                  <span className="book-code">{bookCode}</span>
 
-                  <h2>{book.title}</h2>
+                  <h2>{bookTitle}</h2>
 
-                  <p className="book-author">{book.author}</p>
+                  <p className="book-author">{bookAuthor}</p>
 
                   <div className="book-footer">
-                    <span className="publisher-name">{book.publisher}</span>
+                    <span className="publisher-name">{bookPublisher}</span>
 
                     {available ? (
                       <span className="copy-count">
-                        {book.availableCopies}{" "}
-                        {book.availableCopies === 1
-                          ? "ex. livre"
-                          : "ex. livres"}
+                        {availableCopies}{" "}
+                        {availableCopies === 1 ? "ex. livre" : "ex. livres"}
                       </span>
                     ) : (
                       <span className="due-date">Indisponível</span>
@@ -764,11 +805,11 @@ export function CatalogView({
                 }}
               >
                 <div className="list-cover-frame">
-                  {book.coverUrl && (
+                  {bookCover && (
                     <img
                       className="list-cover"
-                      src={book.coverUrl}
-                      alt={`Capa do livro ${book.title}`}
+                      src={bookCover}
+                      alt={`Capa do livro ${bookTitle}`}
                       loading="lazy"
                       referrerPolicy="no-referrer"
                       onError={coverFallback}
@@ -777,46 +818,46 @@ export function CatalogView({
 
                   <div
                     className={`list-cover-fallback ${
-                      book.coverUrl ? "" : "visible"
+                      bookCover ? "" : "visible"
                     }`}
                   >
                     <BookOpen size={24} />
-                    <span>{book.title}</span>
+                    <span>{bookTitle}</span>
                   </div>
                 </div>
 
                 <div className="list-details">
                   <div className="list-labels">
-                    <span className="book-code">{book.code}</span>
+                    <span className="book-code">{bookCode}</span>
 
                     <span
                       className={`inline-status ${
                         available ? "available" : "unavailable"
                       }`}
                     >
-                      {book.status}
+                      {bookStatus}
                     </span>
                   </div>
 
-                  <h2>{book.title}</h2>
+                  <h2>{bookTitle}</h2>
 
-                  <p>{book.author}</p>
+                  <p>{bookAuthor}</p>
 
                   <div className="list-meta">
-                    <span>{book.publisher}</span>
+                    <span>{bookPublisher}</span>
                     <span>·</span>
                     <span>
                       {book.shelfLocation?.corredor || "Corredor não informado"}
                     </span>
                     <span>·</span>
-                    <span>ISBN {book.isbn}</span>
+                    <span>ISBN {book.isbn ?? book.code ?? ""}</span>
                   </div>
                 </div>
 
                 <div className="list-actions">
                   <span className={available ? "copy-count" : "due-date"}>
                     {available
-                      ? `${book.availableCopies} exemplares livres`
+                      ? `${availableCopies} exemplares livres`
                       : "Indisponível"}
                   </span>
 

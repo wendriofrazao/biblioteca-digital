@@ -18,7 +18,6 @@ bookRouter.post(
 
 bookRouter.get(
   "/",
-  authMiddlewarer,
   bookController.getAllBooks.bind(bookController),
 );
 
