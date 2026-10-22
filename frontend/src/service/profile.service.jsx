@@ -26,6 +26,6 @@ async function request(endpoint) {
 export const ProfileService = {
   async getAllProfiles() {
     const response = await request("/user");
-    return response.users ?? [];
+    return response.user ?? [];
   },
 };

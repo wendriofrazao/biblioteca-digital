@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -14,11 +14,12 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 import "../styles/components/Staff.css";
-import { useIsAdmin } from "../context/auth.context";
+import { useAuth } from "../context/auth.context.jsx";
 import { useLivros } from "../hook/useLivros.jsx";
 import { useAutores } from "../hook/useAutores.jsx";
 import { useCategorias } from "../hook/useCategorias.jsx";
-import { usePerfis } from "../hook/usePerfis.jsx";
+
+const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 const tabs = [
   { key: "livros", label: "Livros", icon: BookOpen },
@@ -58,14 +59,108 @@ const copy = {
     action: "",
     empty: "Selecione um leitor na lista.",
     note: "Acesso e circulação",
-    text: "Contas são criadas pela página de entrada. Aqui você acompanha o cadastro e ajusta o acesso.",
+    text: "Contas são criadas pela página de entrada. Aqui você acompanha o cadastro.",
   },
 };
 
-const simpleSchema = z.object({
+const emptyBook = {
+  isbn: "",
+  titulo: "",
+  categoriaId: "",
+  anoPublicacao: "",
+  quantidade: "0",
+  paginas: "",
+  editora: "",
+  edicao: "",
+  idioma: "",
+  localizacao: "",
+  sinopse: "",
+  capaUrl: "",
+  autores: [],
+  tags: "",
+};
+
+const authorSchema = z.object({
+  nome: z.string().trim().min(1, "Informe o nome.").max(200),
+  nacionalidade: z.string().trim().min(1, "Informe a nacionalidade.").max(100),
+  nascimento: z.string().min(1, "Informe a data de nascimento."),
+});
+const categorySchema = z.object({
   nome: z.string().trim().min(1, "Informe o nome.").max(200),
   detail: z.string().trim().max(10000),
 });
+
+const bookSchema = z.object({
+  isbn: z.string().trim().min(1, "Informe o ISBN.").max(32),
+  titulo: z.string().trim().min(1, "Informe o título.").max(300),
+  categoriaId: z.string(),
+  anoPublicacao: z.string(),
+  quantidade: z.coerce
+    .number()
+    .int()
+    .min(0, "A quantidade não pode ser negativa.")
+    .max(100000),
+  paginas: z.string(),
+  editora: z.string().max(200),
+  edicao: z.string().max(100),
+  idioma: z.string().max(100),
+  localizacao: z.string().max(200),
+  sinopse: z.string().max(10000),
+  capaUrl: z.string(),
+  autores: z.array(z.string()),
+  tags: z.string(),
+});
+
+async function apiRequest(endpoint, options = {}) {
+  if (!API_URL)
+    throw new Error("Configure VITE_LOCAL_API_URL no arquivo .env.");
+  const token = localStorage.getItem("token");
+  const headers = {
+    ...(options.body ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+  let response;
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  } catch {
+    throw new Error(
+      "Não foi possível conectar ao backend. Verifique se o servidor está ativo.",
+    );
+  }
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body.success === false) {
+    throw new Error(
+      body.message || body.error || `Erro na requisição (${response.status}).`,
+    );
+  }
+  return body;
+}
+
+function unwrap(response, keys = []) {
+  if (Array.isArray(response)) return response;
+  for (const key of keys)
+    if (Array.isArray(response?.[key])) return response[key];
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  // Algumas APIs envelopam a lista em { data: { users: [...] } }.
+  if (response?.data && typeof response.data === "object") {
+    for (const key of keys)
+      if (Array.isArray(response.data[key])) return response.data[key];
+  }
+  return [];
+}
+
+function extractList(response, keys = []) {
+  if (Array.isArray(response)) return response;
+  for (const key of keys) {
+    if (Array.isArray(response?.[key])) return response[key];
+    if (Array.isArray(response?.data?.[key])) return response.data[key];
+  }
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  return null;
+}
 
 function Field({ label, children, wide = false }) {
   return (
@@ -86,33 +181,46 @@ function Metric({ label, value, detail, accent = false }) {
   );
 }
 
-const emptyBook = {
-  isbn: "",
-  titulo: "",
-  categoriaId: "",
-  autorId: "",
-  anoPublicacao: "",
-  quantidade: 0,
-  paginas: "",
-  editora: "",
-  edicao: "",
-  idioma: "",
-  localizacao: "",
-  sinopse: "",
-  capaUrl: "",
-};
-
 export function AdminPage() {
-  const { data: isAdmin, isLoading: checking } = useIsAdmin();
+  const { isAdmin, loading: checking } = useAuth();
   const booksQuery = useLivros();
   const authorsQuery = useAutores();
   const categoriesQuery = useCategorias();
-  const profilesQuery = usePerfis();
-
-  const livros = booksQuery.data ?? [];
-  const autores = authorsQuery.data ?? [];
-  const categorias = categoriesQuery.data ?? [];
-  const perfis = profilesQuery.data ?? [];
+  // Rota montada no backend: router.use("/user", authRouter) + authRouter.get("/user").
+  // Portanto, a listagem administrativa fica em GET /user/user.
+  const profilesQuery = useQuery({
+    queryKey: ["perfis", "users"],
+    enabled: Boolean(isAdmin),
+    queryFn: async () => {
+      const response = await apiRequest("/user/user");
+      const list = extractList(response, [
+        "users",
+        "usuarios",
+        "perfis",
+        "profiles",
+        "user",
+      ]);
+      if (!list) {
+        throw new Error(
+          "A rota /user/user respondeu, mas não retornou uma lista de usuários reconhecida.",
+        );
+      }
+      return list;
+    },
+  });
+  const livros = unwrap(booksQuery.data, ["books", "livros", "book"]);
+  const autores = unwrap(authorsQuery.data, ["authors", "autores", "author"]);
+  const categorias = unwrap(categoriesQuery.data, [
+    "categories",
+    "categorias",
+    "category",
+  ]);
+  const perfis = unwrap(profilesQuery.data, [
+    "users",
+    "perfis",
+    "profiles",
+    "user",
+  ]);
   const qc = useQueryClient();
 
   const [tab, setTab] = useState("livros");
@@ -120,6 +228,8 @@ export function AdminPage() {
   const [book, setBook] = useState(emptyBook);
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
+  const [nacionalidade, setNacionalidade] = useState("");
+  const [nascimento, setNascimento] = useState("");
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState("");
   const [open, setOpen] = useState(false);
@@ -138,57 +248,73 @@ export function AdminPage() {
         : tab === "categorias"
           ? categoriesQuery
           : profilesQuery;
-
   const query = filter.trim().toLocaleLowerCase("pt-BR");
+
   const rows =
     tab === "livros"
       ? livros.map((l) => ({
           id: l.id,
-          title: l.titulo,
-          subtitle: `${l.autores?.nome ?? "Sem autor"} · ISBN ${l.isbn}`,
-          detail: `${l.quantidade_disponivel}/${l.quantidade} disponíveis`,
-          search: `${l.titulo} ${l.isbn} ${l.autores?.nome ?? ""} ${l.tags.join(" ")}`,
+          title: l.titulo ?? l.title ?? "Livro sem título",
+          subtitle: `${Array.isArray(l.autores) ? l.autores.map((a) => a.nome).join(", ") : (l.autores?.nome ?? "Sem autor")} · ISBN ${l.isbn ?? "—"}`,
+          detail: `${l.quantidade_disponivel ?? l.quantidadeDisponivel ?? 0}/${l.quantidade ?? 0} disponíveis`,
+          search: `${l.titulo ?? ""} ${l.isbn ?? ""} ${Array.isArray(l.autores) ? l.autores.map((a) => a.nome).join(" ") : (l.autores?.nome ?? "")} ${(Array.isArray(l.tags) ? l.tags : []).join(" ")}`,
         }))
       : tab === "autores"
         ? autores.map((a) => ({
             id: a.id,
-            title: a.nome,
-            subtitle: a.biografia ?? "Biografia não informada",
-            detail: `${livros.filter((l) => l.livros_autores.some((link) => link.autor_id === a.id) || l.autor_id === a.id).length} obras`,
-            search: a.nome,
+            title: a.nome ?? a.name ?? "Autor sem nome",
+            subtitle:
+              [
+                a.nacionalidade,
+                a.nascimento ? String(a.nascimento).slice(0, 10) : "",
+              ]
+                .filter(Boolean)
+                .join(" · ") || "Dados não informados",
+            detail: `${livros.filter((l) => (Array.isArray(l.livros_autores) && l.livros_autores.some((link) => link?.autor_id === a.id || link?.autorId === a.id)) || l.autor_id === a.id || l.autorId === a.id || (Array.isArray(l.autores) && l.autores.some((link) => link?.id === a.id))).length} obras`,
+            search: a.nome ?? a.name ?? "",
           }))
         : tab === "categorias"
           ? categorias.map((c) => ({
               id: c.id,
-              title: c.nome,
+              title: c.nome ?? c.name ?? "Categoria sem nome",
               subtitle: c.descricao ?? "Descrição não informada",
-              detail: `${livros.filter((l) => l.categoria_id === c.id).length} obras`,
-              search: c.nome,
+              detail: `${livros.filter((l) => (l.categoria_id ?? l.categoriaId) === c.id).length} obras`,
+              search: c.nome ?? c.name ?? "",
             }))
           : perfis.map((p) => ({
               id: p.id,
-              title: p.nome,
+              title: p.nome ?? p.name ?? "Usuário",
               subtitle: p.email ?? "E-mail não informado",
-              detail: p.status === "ATIVO" ? "Ativo" : "Bloqueado",
-              search: `${p.nome} ${p.email ?? ""} ${p.matricula ?? ""}`,
+              detail: (p.status ?? "ATIVO") === "ATIVO" ? "Ativo" : "Bloqueado",
+              search: `${p.nome ?? p.name ?? ""} ${p.email ?? ""} ${p.matricula ?? ""}`,
             }));
 
   const filtered = rows.filter((row) =>
-    row.search.toLocaleLowerCase("pt-BR").includes(query),
+    String(row.search ?? "")
+      .toLocaleLowerCase("pt-BR")
+      .includes(query),
   );
 
   function fail(error) {
-    const message =
+    toast.error(
       error && typeof error === "object" && "message" in error
         ? String(error.message)
-        : "Não foi possível salvar a alteração.";
-    toast.error(message);
+        : "Não foi possível concluir a operação.",
+    );
   }
 
-  function refresh() {
-    for (const key of ["livros", "livro", "autores", "categorias", "perfis"]) {
-      void qc.invalidateQueries({ queryKey: [key] });
-    }
+  // Recarrega explicitamente as consultas depois de alterações. Isso evita depender
+  // dos nomes exatos das queryKeys usados pelos hooks de livros/autores/categorias.
+  async function refresh() {
+    await qc.invalidateQueries();
+    const results = await Promise.allSettled([
+      booksQuery.refetch(),
+      authorsQuery.refetch(),
+      categoriesQuery.refetch(),
+      ...(isAdmin ? [profilesQuery.refetch()] : []),
+    ]);
+    const failed = results.find((result) => result.status === "rejected");
+    if (failed) throw failed.reason;
   }
 
   function switchTab(next) {
@@ -197,13 +323,25 @@ export function AdminPage() {
     setEditing(null);
     setOpen(false);
     setUserId(null);
+    const queryToLoad =
+      next === "livros"
+        ? booksQuery
+        : next === "autores"
+          ? authorsQuery
+          : next === "categorias"
+            ? categoriesQuery
+            : profilesQuery;
+    // Atualiza ao entrar na aba, mesmo que o hook esteja usando cache.
+    void queryToLoad.refetch();
   }
 
   function newRecord() {
     setEditing(null);
-    setBook(emptyBook);
+    setBook({ ...emptyBook, autores: [] });
     setName("");
     setDetail("");
+    setNacionalidade("");
+    setNascimento("");
     setCoverFailed(false);
     setOpen(true);
   }
@@ -214,42 +352,59 @@ export function AdminPage() {
     if (tab === "livros") {
       const row = livros.find((l) => l.id === id);
       if (!row) return;
+      const links = Array.isArray(row.livros_autores) ? row.livros_autores : [];
+      const autoresIds = links
+        .map((a) => a.autor_id ?? a.autorId)
+        .filter(Boolean);
       setBook({
-        isbn: row.isbn,
-        titulo: row.titulo,
-        categoriaId: row.categoria_id ?? "",
+        ...emptyBook,
+        isbn: row.isbn ?? "",
+        titulo: row.titulo ?? "",
+        categoriaId: String(row.categoria_id ?? row.categoriaId ?? ""),
         editora: row.editora ?? "",
-        anoPublicacao: String(row.ano_publicacao ?? ""),
-        quantidade: String(row.quantidade),
-        autores: row.livros_autores.length
-          ? row.livros_autores.map((a) => a.autor_id)
-          : row.autor_id
-            ? [row.autor_id]
-            : [],
+        anoPublicacao: String(row.ano_publicacao ?? row.anoPublicacao ?? ""),
+        quantidade: String(row.quantidade ?? 0),
+        autores: autoresIds.length
+          ? autoresIds
+          : row.autor_id || row.autorId
+            ? [row.autor_id ?? row.autorId]
+            : Array.isArray(row.autores)
+              ? row.autores.map((a) => a.id).filter(Boolean)
+              : [],
         paginas: String(row.paginas ?? ""),
         edicao: row.edicao ?? "",
         idioma: row.idioma ?? "",
         localizacao: row.localizacao ?? "",
-        sinopse: row.descricao ?? "",
-        capaUrl: row.capa ?? "",
-        tags: row.tags.join(", "),
+        sinopse: row.descricao ?? row.sinopse ?? "",
+        capaUrl: row.capa ?? row.capaUrl ?? "",
+        tags: Array.isArray(row.tags)
+          ? row.tags.join(", ")
+          : typeof row.tags === "string"
+            ? row.tags
+            : "",
       });
     } else if (tab === "autores") {
       const row = autores.find((a) => a.id === id);
       if (!row) return;
-      setName(row.nome);
+      setName(row.nome ?? row.name ?? "");
+      setNacionalidade(row.nacionalidade ?? "");
+      setNascimento(
+        String(
+          row.nascimento ?? row.data_nascimento ?? row.dataNascimento ?? "",
+        ).slice(0, 10),
+      );
       setDetail(row.biografia ?? "");
     } else if (tab === "categorias") {
       const row = categorias.find((c) => c.id === id);
       if (!row) return;
-      setName(row.nome);
+      setName(row.nome ?? row.name ?? "");
       setDetail(row.descricao ?? "");
     } else {
       const row = perfis.find((p) => p.id === id);
       if (!row) return;
       setUserId(id);
-      setLimit(String(row.limite_emprestimos));
-      setBlocked(row.status === "BLOQUEADO");
+      setLimit(String(row.limite_emprestimos ?? row.limiteEmprestimos ?? 5));
+      setBlocked((row.status ?? "ATIVO") === "BLOQUEADO");
       return;
     }
     setOpen(true);
@@ -265,53 +420,68 @@ export function AdminPage() {
     if (!isAdmin || busy) return;
     const parsed =
       tab === "livros"
-        ? parseBook(book)
-        : simpleSchema.safeParse({ nome: name, detail });
+        ? bookSchema.safeParse(book)
+        : tab === "autores"
+          ? authorSchema.safeParse({ nome: name, nacionalidade, nascimento })
+          : categorySchema.safeParse({ nome: name, detail });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Confira os campos.");
       return;
     }
-
     setBusy(true);
     try {
       if (tab === "livros") {
-        const result = parseBook(book);
-        if (!result.success) return;
-        const { error } = await supabase.rpc(
-          "salvar_livro",
-          editing
-            ? { _dados: result.data, _id: editing }
-            : { _dados: result.data },
+        const value = parsed.data;
+        const payload = {
+          isbn: value.isbn.trim(),
+          titulo: value.titulo.trim(),
+          categoria_id: value.categoriaId || null,
+          editora: value.editora || null,
+          ano_publicacao: value.anoPublicacao
+            ? Number(value.anoPublicacao)
+            : null,
+          quantidade: Number(value.quantidade),
+          paginas: value.paginas ? Number(value.paginas) : null,
+          edicao: value.edicao || null,
+          idioma: value.idioma || null,
+          localizacao: value.localizacao || null,
+          descricao: value.sinopse || null,
+          capa: value.capaUrl || null,
+          autores: value.autores,
+          tags: value.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        };
+        await apiRequest(
+          editing ? `/book/${encodeURIComponent(editing)}` : "/book",
+          {
+            method: editing ? "PUT" : "POST",
+            body: JSON.stringify(payload),
+          },
         );
-        if (error) throw error;
       } else {
-        const result = simpleSchema.parse({ nome: name, detail });
-        if (tab === "autores") {
-          const payload = {
-            nome: result.nome,
-            biografia: result.detail || null,
-          };
-          const { error } = editing
-            ? await supabase.from("autores").update(payload).eq("id", editing)
-            : await supabase.from("autores").insert(payload);
-          if (error) throw error;
-        } else {
-          const payload = {
-            nome: result.nome,
-            descricao: result.detail || null,
-          };
-          const { error } = editing
-            ? await supabase
-                .from("categorias")
-                .update(payload)
-                .eq("id", editing)
-            : await supabase.from("categorias").insert(payload);
-          if (error) throw error;
-        }
+        const value = parsed.data;
+        const endpoint = tab === "autores" ? "/author" : "/category";
+        const payload =
+          tab === "autores"
+            ? {
+                nome: value.nome,
+                nacionalidade: value.nacionalidade,
+                nascimento: value.nascimento,
+              }
+            : { nome: value.nome, descricao: value.detail || null };
+        await apiRequest(
+          editing ? `${endpoint}/${encodeURIComponent(editing)}` : endpoint,
+          {
+            method: editing ? "PUT" : "POST",
+            body: JSON.stringify(payload),
+          },
+        );
       }
       toast.success(editing ? "Registro atualizado." : "Registro cadastrado.");
       setOpen(false);
-      refresh();
+      await refresh();
     } catch (error) {
       fail(error);
     } finally {
@@ -321,29 +491,22 @@ export function AdminPage() {
 
   async function remove(id) {
     if (!isAdmin || busy || tab === "usuarios") return;
-    if (tab === "livros") {
-      const row = livros.find((l) => l.id === id);
-      if (!row) return;
-      if (row.quantidade !== row.quantidade_disponivel) {
-        toast.error(
-          "Não é possível remover um livro com exemplares emprestados.",
-        );
-        return;
-      }
-      const { count, error } = await supabase
-        .from("emprestimos")
-        .select("id", { count: "exact", head: true })
-        .eq("livro_id", id);
-      if (error) {
-        fail(error);
-        return;
-      }
-      if (count) {
-        toast.error(
-          "Este livro possui histórico de empréstimos e não pode ser excluído. O histórico será preservado.",
-        );
-        return;
-      }
+    const item = livros.find((l) => l.id === id);
+    if (
+      tab === "livros" &&
+      item &&
+      Number(item.quantidade ?? 0) !==
+        Number(
+          item.quantidade_disponivel ??
+            item.quantidadeDisponivel ??
+            item.quantidade ??
+            0,
+        )
+    ) {
+      toast.error(
+        "Não é possível remover um livro com exemplares emprestados.",
+      );
+      return;
     }
     if (
       !window.confirm("Excluir este registro? Esta ação não pode ser desfeita.")
@@ -351,23 +514,17 @@ export function AdminPage() {
       return;
     setBusy(true);
     try {
-      const table =
+      const endpoint =
         tab === "livros"
-          ? "livros"
+          ? "/book"
           : tab === "autores"
-            ? "autores"
-            : "categorias";
-      const { error } = await supabase.from(table).delete().eq("id", id);
-      if (error) {
-        if (error.code === "23503") {
-          throw new Error(
-            "Este registro está vinculado a livros ou empréstimos e não pode ser excluído.",
-          );
-        }
-        throw error;
-      }
+            ? "/author"
+            : "/category";
+      await apiRequest(`${endpoint}/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
       toast.success("Registro excluído.");
-      refresh();
+      await refresh();
     } catch (error) {
       fail(error);
     } finally {
@@ -384,23 +541,26 @@ export function AdminPage() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        limite_emprestimos: result.data,
-        status: blocked ? "BLOQUEADO" : "ATIVO",
-      })
-      .eq("id", user.id);
-    setBusy(false);
-    if (error) fail(error);
-    else {
+    try {
+      // Esta operação requer que o backend exponha PUT /user/:id com esses campos.
+      await apiRequest(`/user/${encodeURIComponent(user.id)}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          limite_emprestimos: result.data,
+          status: blocked ? "BLOQUEADO" : "ATIVO",
+        }),
+      });
       toast.success("Usuário atualizado.");
-      refresh();
+      await refresh();
+    } catch (error) {
+      fail(error);
+    } finally {
+      setBusy(false);
     }
   }
 
-  const safeCover = /^https?:\/\//i.test(book.capaUrl.trim())
-    ? book.capaUrl.trim()
+  const safeCover = /^https?:\/\//i.test(String(book.capaUrl ?? "").trim())
+    ? String(book.capaUrl).trim()
     : "";
 
   if (checking)
@@ -428,7 +588,6 @@ export function AdminPage() {
           </p>
         </div>
       </header>
-
       <div className="admin-metrics">
         <Metric
           label="Títulos no catálogo"
@@ -437,8 +596,8 @@ export function AdminPage() {
         />
         <Metric
           label="Exemplares físicos"
-          value={livros.reduce((sum, l) => sum + l.quantidade, 0)}
-          detail={`${livros.reduce((sum, l) => sum + l.quantidade_disponivel, 0)} disponíveis`}
+          value={livros.reduce((sum, l) => sum + Number(l.quantidade ?? 0), 0)}
+          detail={`${livros.reduce((sum, l) => sum + Number(l.quantidade_disponivel ?? l.quantidadeDisponivel ?? 0), 0)} disponíveis`}
         />
         <Metric
           label="Autores & categorias"
@@ -448,11 +607,10 @@ export function AdminPage() {
         />
         <Metric
           label="Leitores ativos"
-          value={perfis.filter((p) => p.status === "ATIVO").length}
+          value={perfis.filter((p) => (p.status ?? "ATIVO") === "ATIVO").length}
           detail={`${perfis.length} leitores cadastrados`}
         />
       </div>
-
       <nav
         className="admin-tabs"
         aria-label="Seções administrativas"
@@ -474,14 +632,12 @@ export function AdminPage() {
           );
         })}
       </nav>
-
       <div className="admin-columns">
         <section className="admin-section">
           <div className="admin-section-heading">
             <h2>{tabs.find((t) => t.key === tab)?.label} do acervo</h2>
             <span className="admin-count">{rows.length} registros</span>
           </div>
-
           <div className="admin-search">
             <Search size={17} />
             <input
@@ -495,12 +651,12 @@ export function AdminPage() {
               onChange={(e) => setFilter(e.target.value)}
             />
           </div>
-
           {currentQuery.isLoading ? (
             <p className="admin-state">Carregando registros...</p>
           ) : currentQuery.isError ? (
             <div className="admin-state admin-error">
-              Não foi possível carregar os registros.
+              {currentQuery.error?.message ||
+                "Não foi possível carregar os registros."}{" "}
               <button
                 className="admin-link"
                 onClick={() => void currentQuery.refetch()}
@@ -549,7 +705,6 @@ export function AdminPage() {
             </div>
           )}
         </section>
-
         <section className="admin-section">
           <div className="admin-section-heading admin-detail-heading">
             <div>
@@ -562,11 +717,10 @@ export function AdminPage() {
               </button>
             )}
           </div>
-
           {tab === "usuarios" && user ? (
             <form onSubmit={saveUser} className="admin-user-form">
               <div>
-                <h3>{user.nome}</h3>
+                <h3>{user.nome ?? user.name}</h3>
                 <p className="admin-muted break-all">{user.email}</p>
                 <p className="admin-record-detail">
                   Matrícula {user.matricula ?? "—"}
@@ -609,7 +763,6 @@ export function AdminPage() {
               )}
             </div>
           )}
-
           <div className="admin-note">
             <p>
               <ShieldCheck size={17} /> {content.note}
@@ -618,7 +771,6 @@ export function AdminPage() {
           </div>
         </section>
       </div>
-
       {open && (
         <div
           className="admin-modal-backdrop"
@@ -658,7 +810,6 @@ export function AdminPage() {
                 ×
               </button>
             </header>
-
             <form onSubmit={save} className="admin-form">
               {tab === "livros" ? (
                 <>
@@ -692,13 +843,12 @@ export function AdminPage() {
                         <option value="none">Sem categoria</option>
                         {categorias.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.nome}
+                            {c.nome ?? c.name}
                           </option>
                         ))}
                       </select>
                     </Field>
                   </div>
-
                   <fieldset className="admin-author-picker">
                     <legend>Autores</legend>
                     <div className="admin-author-list">
@@ -711,12 +861,20 @@ export function AdminPage() {
                               setBook((old) => ({
                                 ...old,
                                 autores: e.target.checked
-                                  ? [...old.autores, a.id]
-                                  : old.autores.filter((id) => id !== a.id),
+                                  ? [
+                                      ...(Array.isArray(old.autores)
+                                        ? old.autores
+                                        : []),
+                                      a.id,
+                                    ]
+                                  : (Array.isArray(old.autores)
+                                      ? old.autores
+                                      : []
+                                    ).filter((id) => id !== a.id),
                               }))
                             }
                           />
-                          {a.nome}
+                          {a.nome ?? a.name}
                         </label>
                       ))}
                       {!autores.length && (
@@ -724,7 +882,6 @@ export function AdminPage() {
                       )}
                     </div>
                   </fieldset>
-
                   <div className="admin-form-grid admin-form-divider">
                     <Field label="Editora">
                       <input
@@ -826,6 +983,36 @@ export function AdminPage() {
                     </Field>
                   </div>
                 </>
+              ) : tab === "autores" ? (
+                <>
+                  <Field label="Nome *">
+                    <input
+                      required
+                      maxLength={200}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </Field>
+                  <div className="admin-form-grid">
+                    <Field label="Nacionalidade *">
+                      <input
+                        required
+                        maxLength={100}
+                        value={nacionalidade}
+                        onChange={(e) => setNacionalidade(e.target.value)}
+                        placeholder="Brasileiro"
+                      />
+                    </Field>
+                    <Field label="Data de nascimento *">
+                      <input
+                        required
+                        type="date"
+                        value={nascimento}
+                        onChange={(e) => setNascimento(e.target.value)}
+                      />
+                    </Field>
+                  </div>
+                </>
               ) : (
                 <>
                   <Field label="Nome *">
@@ -836,7 +1023,7 @@ export function AdminPage() {
                       onChange={(e) => setName(e.target.value)}
                     />
                   </Field>
-                  <Field label={tab === "autores" ? "Biografia" : "Descrição"}>
+                  <Field label="Descrição">
                     <textarea
                       rows={5}
                       maxLength={10000}
