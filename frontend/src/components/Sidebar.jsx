@@ -20,11 +20,35 @@ export function LeftSidebar({
 }) {
   const navigate = useNavigate();
 
-  const tipoUsuario = String(user?.tipo ?? user?.role ?? "").toUpperCase();
-  const isAdmin = tipoUsuario === "ADMIN";
+  const tipoUsuario = String(
+    user?.role ??
+      user?.tipo ??
+      user?.tipoUsuario ??
+      user?.tipo_usuario ??
+      user?.perfil ??
+      "",
+  )
+    .trim()
+    .toUpperCase();
+
+  const isAdmin = ["ADMIN", "ADMINISTRADOR", "ADMINISTRATOR"].includes(
+    tipoUsuario,
+  );
+
+  const nomeUsuario =
+    user?.nome ??
+    user?.name ??
+    user?.nomeCompleto ??
+    user?.nome_completo ??
+    user?.username ??
+    user?.email ??
+    "Usuário";
+
+  const matriculaUsuario =
+    user?.matricula ?? user?.code ?? user?.codigo ?? user?.registration ?? "";
 
   const handleNavClick = (tab, link) => {
-    onSelectTab(tab);
+    onSelectTab?.(tab);
     navigate(link);
     onCloseMobile();
   };
@@ -115,14 +139,11 @@ export function LeftSidebar({
 
       <div className="sidebar-user" data-purpose="user-profile">
         <div className="sidebar-user-info">
-          <p className="sidebar-user-name">
-            {user?.name ?? user?.nome ?? "Usuário"}
-          </p>
+          <p className="sidebar-user-name">{nomeUsuario}</p>
 
           <p className="sidebar-user-details">
             {isAdmin ? "Administrador" : "Leitor"}
-            {" · "}
-            {user?.code ?? user?.matricula ?? ""}
+            {matriculaUsuario ? ` · ${matriculaUsuario}` : ""}
           </p>
         </div>
 

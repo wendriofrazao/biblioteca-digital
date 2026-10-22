@@ -2,39 +2,34 @@ import { useEffect, useState } from "react";
 import { BibliotecaDashboard } from "../components/BibliotecaDashboard.jsx";
 import { getDashboardData } from "../service/dashboard.service.jsx";
 import { useAuth } from "../context/auth.context.jsx";
-import { HeaderDashboard } from "../components/HeaderDashboard.jsx";
 
 export function Dashboard() {
-  const { user, loading: authLoading, loadUser, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
 
-  const [dados, setDados] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dados, setDados] = useState({});
   const [erro, setErro] = useState("");
 
   useEffect(() => {
+    // Aguarda somente a verificação inicial da autenticação.
+    if (authLoading) return;
+
     let ativo = true;
 
     async function carregarDashboard() {
       try {
-        setLoading(true);
         setErro("");
-
-        if (!user && !authLoading) {
-          await loadUser();
-        }
 
         const resultado = await getDashboardData();
 
         if (ativo) {
-          setDados(resultado);
+          setDados(resultado ?? {});
         }
       } catch (error) {
         if (ativo) {
-          setErro(error.message || "Erro ao carregar a dashboard.");
-        }
-      } finally {
-        if (ativo) {
-          setLoading(false);
+          setErro(
+            error.message ||
+              "Não foi possível atualizar os dados da biblioteca.",
+          );
         }
       }
     }
@@ -44,31 +39,38 @@ export function Dashboard() {
     return () => {
       ativo = false;
     };
-  }, [user, authLoading, loadUser]);
-
-  if (authLoading || loading) {
-    return <p>Carregando dados da biblioteca...</p>;
-  }
-
-  if (erro) {
-    return (
-      <section>
-        <p>Não foi possível carregar a dashboard: {erro}</p>
-        <button type="button" onClick={() => window.location.reload()}>
-          Tentar novamente
-        </button>
-      </section>
-    );
-  }
+  }, [authLoading]);
 
   const usuario = {
-    nome: user?.nome || "Usuário",
-    tipo: user?.tipo || "Usuário",
-    matricula: user?.matricula || "",
+    ...user,
+    nome:
+      user?.nome ??
+      user?.name ??
+      user?.nomeCompleto ??
+      user?.username ??
+      user?.email ??
+      "Usuário",
+    name:
+      user?.name ?? user?.nome ?? user?.username ?? user?.email ?? "Usuário",
+    tipo: user?.tipo ?? user?.role ?? "USER",
+    role: user?.role ?? user?.tipo ?? "USER",
+    matricula: user?.matricula ?? user?.code ?? user?.codigo ?? "",
+    code: user?.code ?? user?.matricula ?? user?.codigo ?? "",
   };
 
+  // A dashboard aparece imediatamente, sem uma tela de carregamento
+  // durante a busca dos dados.
   return (
     <>
+      {erro && (
+        <div className="dashboard-error" role="alert">
+          <span>{erro}</span>
+          <button type="button" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       <BibliotecaDashboard usuario={usuario} dados={dados} onSair={signOut} />
     </>
   );

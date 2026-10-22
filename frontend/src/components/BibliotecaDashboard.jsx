@@ -4,17 +4,35 @@ import { LeftSidebar } from "./Sidebar";
 import { Icon } from "./Icon";
 import "../styles/components/BibliotecaDashboard.css";
 
+const dadosPadrao = {
+  titulos: 0,
+  exemplares: 0,
+  emprestimos: 0,
+  atrasos: 0,
+  devolucoes: [],
+  arvore: {
+    nos: 0,
+    altura: 0,
+    alturaNegra: 0,
+    raiz: "—",
+  },
+};
+
 function Stat({ icon, value, label }) {
   return (
     <article className="dashboard-stat">
       <Icon name={icon} size={21} />
-      <p className="stat-value">{value}</p>
+      <p className="stat-value">{value ?? 0}</p>
       <p className="stat-label">{label}</p>
     </article>
   );
 }
 
 function DashboardContent({ usuario, dados }) {
+  const devolucoes = Array.isArray(dados.devolucoes) ? dados.devolucoes : [];
+
+  const arvore = dados.arvore ?? dadosPadrao.arvore;
+
   return (
     <div className="dashboard-content">
       <header className="dashboard-header">
@@ -57,21 +75,21 @@ function DashboardContent({ usuario, dados }) {
           <article className="editorial-section returns-panel">
             <h2>Devoluções próximas</h2>
 
-            {dados.devolucoes.length > 0 ? (
+            {devolucoes.length > 0 ? (
               <div className="returns-list">
-                {dados.devolucoes.map((devolucao) => (
+                {devolucoes.map((devolucao, index) => (
                   <div
                     className="return-row"
-                    key={`${devolucao.isbn}-${devolucao.data}`}
+                    key={`${devolucao.isbn ?? "livro"}-${devolucao.data ?? index}`}
                   >
                     <div className="return-book">
-                      <p>{devolucao.titulo}</p>
-                      <span>ISBN {devolucao.isbn}</span>
+                      <p>{devolucao.titulo ?? "Título não informado"}</p>
+                      <span>ISBN {devolucao.isbn ?? "Não informado"}</span>
                     </div>
 
                     <div className="return-date">
                       <Icon name="calendar" size={16} />
-                      <time>{devolucao.data}</time>
+                      <time>{devolucao.data ?? "Data não informada"}</time>
                     </div>
                   </div>
                 ))}
@@ -90,22 +108,22 @@ function DashboardContent({ usuario, dados }) {
             <dl className="tree-stats">
               <div>
                 <dt>Nós indexados</dt>
-                <dd>{dados.arvore.nos}</dd>
+                <dd>{arvore.nos ?? 0}</dd>
               </div>
 
               <div>
                 <dt>Altura da árvore</dt>
-                <dd>{dados.arvore.altura}</dd>
+                <dd>{arvore.altura ?? 0}</dd>
               </div>
 
               <div>
                 <dt>Altura negra</dt>
-                <dd>{dados.arvore.alturaNegra}</dd>
+                <dd>{arvore.alturaNegra ?? 0}</dd>
               </div>
 
               <div>
                 <dt>Raiz (ISBN)</dt>
-                <dd>{dados.arvore.raiz}</dd>
+                <dd>{arvore.raiz ?? "—"}</dd>
               </div>
 
               <div>
@@ -136,14 +154,39 @@ function DashboardContent({ usuario, dados }) {
 
 export function BibliotecaDashboard({
   usuario: usuarioProp,
-  dados = dadosExemplo,
+  dados,
   onSair = () => {},
 }) {
-  const usuario = usuarioProp ?? {
-    nome: "Usuário",
-    tipo: "USER",
-    matricula: "",
+  const usuarioOriginal = usuarioProp ?? {};
+
+  const nome =
+    usuarioOriginal.nome ??
+    usuarioOriginal.name ??
+    usuarioOriginal.username ??
+    usuarioOriginal.email ??
+    "Usuário";
+
+  const usuario = {
+    ...usuarioOriginal,
+    nome,
+    name: usuarioOriginal.name ?? nome,
+    tipo: usuarioOriginal.tipo ?? usuarioOriginal.role ?? "USER",
+    role: usuarioOriginal.role ?? usuarioOriginal.tipo ?? "USER",
+    matricula: usuarioOriginal.matricula ?? usuarioOriginal.code ?? "",
+    code: usuarioOriginal.code ?? usuarioOriginal.matricula ?? "",
   };
+
+  // Combina os dados recebidos com os valores padrão.
+  const dadosSeguros = {
+    ...dadosPadrao,
+    ...(dados ?? {}),
+    arvore: {
+      ...dadosPadrao.arvore,
+      ...(dados?.arvore ?? {}),
+    },
+    devolucoes: Array.isArray(dados?.devolucoes) ? dados.devolucoes : [],
+  };
+
   const [activeTab, setActiveTab] = useState("painel");
   const [isOpenMobile, setIsOpenMobile] = useState(false);
 
@@ -153,14 +196,14 @@ export function BibliotecaDashboard({
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         user={usuario}
-        loanCount={dados?.emprestimos ?? 0}
+        loanCount={dadosSeguros.emprestimos}
         isOpenMobile={isOpenMobile}
         onCloseMobile={() => setIsOpenMobile(false)}
         onSwitchUser={onSair}
       />
 
       <main className="biblioteca-main">
-        <DashboardContent usuario={usuario} dados={dados} />
+        <DashboardContent usuario={usuario} dados={dadosSeguros} />
       </main>
     </div>
   );
