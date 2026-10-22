@@ -91,3 +91,11 @@ export function useAuth() {
 
   return context;
 }
+export function useIsAdmin() {
+  const { isAdmin, loading } = useAuth();
+
+  return {
+    data: isAdmin,
+    isLoading: loading,
+  };
+}

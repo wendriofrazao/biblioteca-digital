@@ -106,7 +106,7 @@ export function LeftSidebar({
                 id: "administracao",
                 label: "Administração",
                 Icon: ShieldCheck,
-                link: "/administracao",
+                link: "/staff",
               })}
             </div>
           </>

@@ -48,4 +48,24 @@ export class AuthRepository {
       throw new Error(`Erro ao criar usuário (repository): ${error}`);
     }
   }
+
+  async getAllUsers() {
+  try {
+    return await prisma.usuario.findMany({
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        matricula: true,
+        tipo: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  } catch (error) {
+    throw new Error(
+      `Erro ao buscar usuários (repository): ${error.message}`,
+    );
+  }
+}
 }

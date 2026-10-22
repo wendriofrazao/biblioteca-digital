@@ -7,6 +7,7 @@ export class AuthController {
     this.loginController = this.loginController.bind(this);
     this.registerController = this.registerController.bind(this);
     this.profileController = this.profileController.bind(this);
+    this.getAllUsersController = this.getAllUsersController.bind(this);
   }
 
   async loginController(req, res) {
@@ -58,7 +59,7 @@ export class AuthController {
         nome,
         email,
         matricula,
-        senha
+        senha,
       };
       const user = await this.authService.registerService(data);
 
@@ -97,6 +98,24 @@ export class AuthController {
         success: false,
         message:
           error instanceof Error ? error.message : "Erro ao entrar na conta",
+      });
+    }
+  }
+  async getAllUsersController(req, res) {
+    try {
+      const users = await this.authService.getAllUsersService();
+
+      return res.status(200).json({
+        success: true,
+        users,
+      });
+    } catch (error) {
+      console.error("Erro ao listar usuários:", error);
+
+      return res.status(500).json({
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Erro ao listar usuários.",
       });
     }
   }

@@ -88,4 +88,8 @@ export class AuthService {
 
     return usuarioSeguro;
   }
+
+  async getAllUsersService() {
+    return await this.auth.getAllUsers();
+  }
 }
