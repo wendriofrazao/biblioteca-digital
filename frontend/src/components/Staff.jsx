@@ -43,7 +43,7 @@ const copy = {
     action: "Novo autor",
     empty: "Dê lugar a uma nova voz.",
     note: "Autoria compartilhada",
-    text: "Uma obra pode ter vários autores. Os vínculos são escolhidos no cadastro do livro.",
+    text: "Uma obra pode ter vários autores.",
   },
   categorias: {
     title: "Organização por categorias",
@@ -51,7 +51,7 @@ const copy = {
     action: "Nova categoria",
     empty: "Um novo caminho para descobrir livros.",
     note: "Mapa do acervo",
-    text: "As categorias conectam títulos por assunto e tornam a consulta mais simples.",
+    text: "As categorias conectam títulos por assunto.",
   },
   usuarios: {
     title: "Gestão de leitores",
@@ -59,7 +59,7 @@ const copy = {
     action: "",
     empty: "Selecione um leitor na lista.",
     note: "Acesso e circulação",
-    text: "Contas são criadas pela página de entrada. Aqui você acompanha o cadastro.",
+    text: "Aqui você acompanha o cadastro dos leitores.",
   },
 };
 
@@ -85,6 +85,7 @@ const authorSchema = z.object({
   nacionalidade: z.string().trim().min(1, "Informe a nacionalidade.").max(100),
   nascimento: z.string().min(1, "Informe a data de nascimento."),
 });
+
 const categorySchema = z.object({
   nome: z.string().trim().min(1, "Informe o nome.").max(200),
   detail: z.string().trim().max(10000),
@@ -95,11 +96,7 @@ const bookSchema = z.object({
   titulo: z.string().trim().min(1, "Informe o título.").max(300),
   categoriaId: z.string(),
   anoPublicacao: z.string(),
-  quantidade: z.coerce
-    .number()
-    .int()
-    .min(0, "A quantidade não pode ser negativa.")
-    .max(100000),
+  quantidade: z.coerce.number().int().min(0).max(100000),
   paginas: z.string(),
   editora: z.string().max(200),
   edicao: z.string().max(100),
@@ -112,53 +109,83 @@ const bookSchema = z.object({
 });
 
 async function apiRequest(endpoint, options = {}) {
-  if (!API_URL)
+  if (!API_URL) {
     throw new Error("Configure VITE_LOCAL_API_URL no arquivo .env.");
+  }
+
   const token = localStorage.getItem("token");
+  const baseUrl = API_URL.replace(/\/+$/, "");
+  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
   const headers = {
     ...(options.body ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
+
   let response;
+
   try {
-    response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+    response = await fetch(`${baseUrl}${path}`, {
+      ...options,
+      headers,
+    });
   } catch {
     throw new Error(
       "Não foi possível conectar ao backend. Verifique se o servidor está ativo.",
     );
   }
-  const body = await response.json().catch(() => ({}));
+
+  const text = await response.text();
+  let body = {};
+
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = { message: text };
+    }
+  }
+
   if (!response.ok || body.success === false) {
     throw new Error(
       body.message || body.error || `Erro na requisição (${response.status}).`,
     );
   }
+
   return body;
 }
 
 function unwrap(response, keys = []) {
   if (Array.isArray(response)) return response;
-  for (const key of keys)
+
+  for (const key of keys) {
     if (Array.isArray(response?.[key])) return response[key];
+  }
+
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response?.data?.data)) return response.data.data;
-  // Algumas APIs envelopam a lista em { data: { users: [...] } }.
+
   if (response?.data && typeof response.data === "object") {
-    for (const key of keys)
+    for (const key of keys) {
       if (Array.isArray(response.data[key])) return response.data[key];
+    }
   }
+
   return [];
 }
 
 function extractList(response, keys = []) {
   if (Array.isArray(response)) return response;
+
   for (const key of keys) {
     if (Array.isArray(response?.[key])) return response[key];
     if (Array.isArray(response?.data?.[key])) return response.data[key];
   }
+
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response?.data?.data)) return response.data.data;
+
   return null;
 }
 
@@ -186,8 +213,8 @@ export function AdminPage() {
   const booksQuery = useLivros();
   const authorsQuery = useAutores();
   const categoriesQuery = useCategorias();
-  // Rota montada no backend: router.use("/user", authRouter) + authRouter.get("/user").
-  // Portanto, a listagem administrativa fica em GET /user/user.
+  const qc = useQueryClient();
+
   const profilesQuery = useQuery({
     queryKey: ["perfis", "users"],
     enabled: Boolean(isAdmin),
@@ -200,14 +227,15 @@ export function AdminPage() {
         "profiles",
         "user",
       ]);
+
       if (!list) {
-        throw new Error(
-          "A rota /user/user respondeu, mas não retornou uma lista de usuários reconhecida.",
-        );
+        throw new Error("A API não retornou uma lista de usuários válida.");
       }
+
       return list;
     },
   });
+
   const livros = unwrap(booksQuery.data, ["books", "livros", "book"]);
   const autores = unwrap(authorsQuery.data, ["authors", "autores", "author"]);
   const categorias = unwrap(categoriesQuery.data, [
@@ -221,11 +249,10 @@ export function AdminPage() {
     "profiles",
     "user",
   ]);
-  const qc = useQueryClient();
 
   const [tab, setTab] = useState("livros");
   const [editing, setEditing] = useState(null);
-  const [book, setBook] = useState(emptyBook);
+  const [book, setBook] = useState({ ...emptyBook });
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
   const [nacionalidade, setNacionalidade] = useState("");
@@ -240,6 +267,7 @@ export function AdminPage() {
 
   const user = perfis.find((p) => p.id === userId);
   const content = copy[tab];
+
   const currentQuery =
     tab === "livros"
       ? booksQuery
@@ -248,6 +276,7 @@ export function AdminPage() {
         : tab === "categorias"
           ? categoriesQuery
           : profilesQuery;
+
   const query = filter.trim().toLocaleLowerCase("pt-BR");
 
   const rows =
@@ -255,9 +284,17 @@ export function AdminPage() {
       ? livros.map((l) => ({
           id: l.id,
           title: l.titulo ?? l.title ?? "Livro sem título",
-          subtitle: `${Array.isArray(l.autores) ? l.autores.map((a) => a.nome).join(", ") : (l.autores?.nome ?? "Sem autor")} · ISBN ${l.isbn ?? "—"}`,
-          detail: `${l.quantidade_disponivel ?? l.quantidadeDisponivel ?? 0}/${l.quantidade ?? 0} disponíveis`,
-          search: `${l.titulo ?? ""} ${l.isbn ?? ""} ${Array.isArray(l.autores) ? l.autores.map((a) => a.nome).join(" ") : (l.autores?.nome ?? "")} ${(Array.isArray(l.tags) ? l.tags : []).join(" ")}`,
+          subtitle: `${
+            Array.isArray(l.autores)
+              ? l.autores.map((a) => a.nome).join(", ")
+              : (l.autores?.nome ?? "Sem autor")
+          } · ISBN ${l.isbn ?? "—"}`,
+          detail: `${l.quantidade_disponivel ?? l.quantidadeDisponivel ?? l.disponiveis ?? 0}/${l.quantidade ?? 0} disponíveis`,
+          search: `${l.titulo ?? ""} ${l.isbn ?? ""} ${
+            Array.isArray(l.autores)
+              ? l.autores.map((a) => a.nome).join(" ")
+              : (l.autores?.nome ?? "")
+          } ${(Array.isArray(l.tags) ? l.tags : []).join(" ")}`,
         }))
       : tab === "autores"
         ? autores.map((a) => ({
@@ -270,7 +307,20 @@ export function AdminPage() {
               ]
                 .filter(Boolean)
                 .join(" · ") || "Dados não informados",
-            detail: `${livros.filter((l) => (Array.isArray(l.livros_autores) && l.livros_autores.some((link) => link?.autor_id === a.id || link?.autorId === a.id)) || l.autor_id === a.id || l.autorId === a.id || (Array.isArray(l.autores) && l.autores.some((link) => link?.id === a.id))).length} obras`,
+            detail: `${
+              livros.filter(
+                (l) =>
+                  (Array.isArray(l.livros_autores) &&
+                    l.livros_autores.some(
+                      (link) =>
+                        link?.autor_id === a.id || link?.autorId === a.id,
+                    )) ||
+                  l.autor_id === a.id ||
+                  l.autorId === a.id ||
+                  (Array.isArray(l.autores) &&
+                    l.autores.some((link) => link?.id === a.id)),
+              ).length
+            } obras`,
             search: a.nome ?? a.name ?? "",
           }))
         : tab === "categorias"
@@ -278,7 +328,12 @@ export function AdminPage() {
               id: c.id,
               title: c.nome ?? c.name ?? "Categoria sem nome",
               subtitle: c.descricao ?? "Descrição não informada",
-              detail: `${livros.filter((l) => (l.categoria_id ?? l.categoriaId) === c.id).length} obras`,
+              detail: `${
+                livros.filter(
+                  (l) =>
+                    Number(l.categoria_id ?? l.categoriaId) === Number(c.id),
+                ).length
+              } obras`,
               search: c.nome ?? c.name ?? "",
             }))
           : perfis.map((p) => ({
@@ -303,17 +358,18 @@ export function AdminPage() {
     );
   }
 
-  // Recarrega explicitamente as consultas depois de alterações. Isso evita depender
-  // dos nomes exatos das queryKeys usados pelos hooks de livros/autores/categorias.
   async function refresh() {
     await qc.invalidateQueries();
+
     const results = await Promise.allSettled([
       booksQuery.refetch(),
       authorsQuery.refetch(),
       categoriesQuery.refetch(),
       ...(isAdmin ? [profilesQuery.refetch()] : []),
     ]);
+
     const failed = results.find((result) => result.status === "rejected");
+
     if (failed) throw failed.reason;
   }
 
@@ -323,6 +379,7 @@ export function AdminPage() {
     setEditing(null);
     setOpen(false);
     setUserId(null);
+
     const queryToLoad =
       next === "livros"
         ? booksQuery
@@ -331,7 +388,7 @@ export function AdminPage() {
           : next === "categorias"
             ? categoriesQuery
             : profilesQuery;
-    // Atualiza ao entrar na aba, mesmo que o hook esteja usando cache.
+
     void queryToLoad.refetch();
   }
 
@@ -349,13 +406,18 @@ export function AdminPage() {
   function edit(id) {
     setEditing(id);
     setCoverFailed(false);
+
     if (tab === "livros") {
       const row = livros.find((l) => l.id === id);
       if (!row) return;
+
       const links = Array.isArray(row.livros_autores) ? row.livros_autores : [];
+
       const autoresIds = links
-        .map((a) => a.autor_id ?? a.autorId)
-        .filter(Boolean);
+        .map((a) => a.autor_id ?? a.autorId ?? a.autor?.id)
+        .filter((id) => id != null)
+        .map(String);
+
       setBook({
         ...emptyBook,
         isbn: row.isbn ?? "",
@@ -367,9 +429,9 @@ export function AdminPage() {
         autores: autoresIds.length
           ? autoresIds
           : row.autor_id || row.autorId
-            ? [row.autor_id ?? row.autorId]
+            ? [String(row.autor_id ?? row.autorId)]
             : Array.isArray(row.autores)
-              ? row.autores.map((a) => a.id).filter(Boolean)
+              ? row.autores.map((a) => String(a.id)).filter(Boolean)
               : [],
         paginas: String(row.paginas ?? ""),
         edicao: row.edicao ?? "",
@@ -386,6 +448,7 @@ export function AdminPage() {
     } else if (tab === "autores") {
       const row = autores.find((a) => a.id === id);
       if (!row) return;
+
       setName(row.nome ?? row.name ?? "");
       setNacionalidade(row.nacionalidade ?? "");
       setNascimento(
@@ -397,62 +460,75 @@ export function AdminPage() {
     } else if (tab === "categorias") {
       const row = categorias.find((c) => c.id === id);
       if (!row) return;
+
       setName(row.nome ?? row.name ?? "");
       setDetail(row.descricao ?? "");
     } else {
       const row = perfis.find((p) => p.id === id);
       if (!row) return;
+
       setUserId(id);
       setLimit(String(row.limite_emprestimos ?? row.limiteEmprestimos ?? 5));
       setBlocked((row.status ?? "ATIVO") === "BLOQUEADO");
       return;
     }
+
     setOpen(true);
   }
 
   function change(key, value) {
     setBook((old) => ({ ...old, [key]: value }));
+
     if (key === "capaUrl") setCoverFailed(false);
   }
 
   async function save(event) {
     event.preventDefault();
-    if (!isAdmin || busy) return;
-    const parsed =
-      tab === "livros"
-        ? bookSchema.safeParse(book)
-        : tab === "autores"
-          ? authorSchema.safeParse({ nome: name, nacionalidade, nascimento })
-          : categorySchema.safeParse({ nome: name, detail });
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Confira os campos.");
-      return;
-    }
-    setBusy(true);
+
+    if (busy) return;
+
     try {
+      setBusy(true);
+
       if (tab === "livros") {
-        const value = parsed.data;
+        const result = bookSchema.safeParse(book);
+
+        if (!result.success) {
+          toast.error(result.error.issues[0].message);
+          return;
+        }
+
+        const value = result.data;
+
+        if (!value.categoriaId) {
+          toast.error("Selecione uma categoria para o livro.");
+          return;
+        }
+
         const payload = {
           isbn: value.isbn.trim(),
           titulo: value.titulo.trim(),
-          categoria_id: value.categoriaId || null,
-          editora: value.editora || null,
-          ano_publicacao: value.anoPublicacao
+          categoriaId: Number(value.categoriaId),
+          editora: value.editora.trim() || null,
+          anoPublicacao: value.anoPublicacao
             ? Number(value.anoPublicacao)
             : null,
           quantidade: Number(value.quantidade),
           paginas: value.paginas ? Number(value.paginas) : null,
-          edicao: value.edicao || null,
-          idioma: value.idioma || null,
-          localizacao: value.localizacao || null,
-          descricao: value.sinopse || null,
-          capa: value.capaUrl || null,
-          autores: value.autores,
+          edicao: value.edicao.trim() || null,
+          idioma: value.idioma.trim() || null,
+          localizacao: value.localizacao.trim() || null,
+          sinopse: value.sinopse.trim() || null,
+          capaUrl: value.capaUrl.trim() || null,
+          autores: value.autores.map(Number),
           tags: value.tags
             .split(",")
             .map((tag) => tag.trim())
             .filter(Boolean),
         };
+
+        console.log("Payload do livro:", payload);
+
         await apiRequest(
           editing ? `/book/${encodeURIComponent(editing)}` : "/book",
           {
@@ -460,29 +536,72 @@ export function AdminPage() {
             body: JSON.stringify(payload),
           },
         );
-      } else {
-        const value = parsed.data;
-        const endpoint = tab === "autores" ? "/author" : "/category";
-        const payload =
-          tab === "autores"
-            ? {
-                nome: value.nome,
-                nacionalidade: value.nacionalidade,
-                nascimento: value.nascimento,
-              }
-            : { nome: value.nome, descricao: value.detail || null };
+
+        toast.success(editing ? "Livro atualizado!" : "Livro cadastrado!");
+      } else if (tab === "autores") {
+        const result = authorSchema.safeParse({
+          nome: name,
+          nacionalidade,
+          nascimento,
+        });
+
+        if (!result.success) {
+          toast.error(result.error.issues[0].message);
+          return;
+        }
+
+        const value = result.data;
+
         await apiRequest(
-          editing ? `${endpoint}/${encodeURIComponent(editing)}` : endpoint,
+          editing ? `/author/${encodeURIComponent(editing)}` : "/author",
           {
             method: editing ? "PUT" : "POST",
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+              nome: value.nome,
+              nacionalidade: value.nacionalidade,
+              nascimento: value.nascimento,
+            }),
           },
         );
+
+        toast.success(editing ? "Autor atualizado!" : "Autor cadastrado!");
+      } else if (tab === "categorias") {
+        const result = categorySchema.safeParse({ nome: name, detail });
+
+        if (!result.success) {
+          toast.error(result.error.issues[0].message);
+          return;
+        }
+
+        const value = result.data;
+
+        await apiRequest(
+          editing ? `/category/${encodeURIComponent(editing)}` : "/category",
+          {
+            method: editing ? "PUT" : "POST",
+            body: JSON.stringify({
+              nome: value.nome,
+              descricao: value.detail || null,
+            }),
+          },
+        );
+
+        toast.success(
+          editing ? "Categoria atualizada!" : "Categoria cadastrada!",
+        );
       }
-      toast.success(editing ? "Registro atualizado." : "Registro cadastrado.");
+
       setOpen(false);
+      setEditing(null);
+      setBook({ ...emptyBook, autores: [] });
+      setName("");
+      setDetail("");
+      setNacionalidade("");
+      setNascimento("");
+
       await refresh();
     } catch (error) {
+      console.error("Erro ao salvar registro:", error);
       fail(error);
     } finally {
       setBusy(false);
@@ -491,7 +610,9 @@ export function AdminPage() {
 
   async function remove(id) {
     if (!isAdmin || busy || tab === "usuarios") return;
+
     const item = livros.find((l) => l.id === id);
+
     if (
       tab === "livros" &&
       item &&
@@ -499,6 +620,7 @@ export function AdminPage() {
         Number(
           item.quantidade_disponivel ??
             item.quantidadeDisponivel ??
+            item.disponiveis ??
             item.quantidade ??
             0,
         )
@@ -508,11 +630,15 @@ export function AdminPage() {
       );
       return;
     }
+
     if (
       !window.confirm("Excluir este registro? Esta ação não pode ser desfeita.")
-    )
+    ) {
       return;
+    }
+
     setBusy(true);
+
     try {
       const endpoint =
         tab === "livros"
@@ -520,9 +646,11 @@ export function AdminPage() {
           : tab === "autores"
             ? "/author"
             : "/category";
+
       await apiRequest(`${endpoint}/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
+
       toast.success("Registro excluído.");
       await refresh();
     } catch (error) {
@@ -534,15 +662,19 @@ export function AdminPage() {
 
   async function saveUser(event) {
     event.preventDefault();
+
     if (!isAdmin || !user || busy) return;
+
     const result = z.coerce.number().int().min(0).max(99).safeParse(limit);
+
     if (!result.success) {
       toast.error("Informe um limite entre 0 e 99.");
       return;
     }
+
     setBusy(true);
+
     try {
-      // Esta operação requer que o backend exponha PUT /user/:id com esses campos.
       await apiRequest(`/user/${encodeURIComponent(user.id)}`, {
         method: "PUT",
         body: JSON.stringify({
@@ -550,6 +682,7 @@ export function AdminPage() {
           status: blocked ? "BLOQUEADO" : "ATIVO",
         }),
       });
+
       toast.success("Usuário atualizado.");
       await refresh();
     } catch (error) {
@@ -563,18 +696,21 @@ export function AdminPage() {
     ? String(book.capaUrl).trim()
     : "";
 
-  if (checking)
+  if (checking) {
     return (
       <main className="admin-page">
         <p>Verificando acesso...</p>
       </main>
     );
-  if (!isAdmin)
+  }
+
+  if (!isAdmin) {
     return (
       <main className="admin-page">
         <p className="admin-error">Acesso restrito a administradores.</p>
       </main>
     );
+  }
 
   return (
     <main className="admin-page">
@@ -588,6 +724,7 @@ export function AdminPage() {
           </p>
         </div>
       </header>
+
       <div className="admin-metrics">
         <Metric
           label="Títulos no catálogo"
@@ -597,7 +734,17 @@ export function AdminPage() {
         <Metric
           label="Exemplares físicos"
           value={livros.reduce((sum, l) => sum + Number(l.quantidade ?? 0), 0)}
-          detail={`${livros.reduce((sum, l) => sum + Number(l.quantidade_disponivel ?? l.quantidadeDisponivel ?? 0), 0)} disponíveis`}
+          detail={`${livros.reduce(
+            (sum, l) =>
+              sum +
+              Number(
+                l.quantidade_disponivel ??
+                  l.quantidadeDisponivel ??
+                  l.disponiveis ??
+                  0,
+              ),
+            0,
+          )} disponíveis`}
         />
         <Metric
           label="Autores & categorias"
@@ -611,6 +758,7 @@ export function AdminPage() {
           detail={`${perfis.length} leitores cadastrados`}
         />
       </div>
+
       <nav
         className="admin-tabs"
         aria-label="Seções administrativas"
@@ -618,6 +766,7 @@ export function AdminPage() {
       >
         {tabs.map((item) => {
           const Icon = item.icon;
+
           return (
             <button
               key={item.key}
@@ -632,12 +781,14 @@ export function AdminPage() {
           );
         })}
       </nav>
+
       <div className="admin-columns">
         <section className="admin-section">
           <div className="admin-section-heading">
             <h2>{tabs.find((t) => t.key === tab)?.label} do acervo</h2>
             <span className="admin-count">{rows.length} registros</span>
           </div>
+
           <div className="admin-search">
             <Search size={17} />
             <input
@@ -651,6 +802,7 @@ export function AdminPage() {
               onChange={(e) => setFilter(e.target.value)}
             />
           </div>
+
           {currentQuery.isLoading ? (
             <p className="admin-state">Carregando registros...</p>
           ) : currentQuery.isError ? (
@@ -679,6 +831,7 @@ export function AdminPage() {
                     <p className="admin-record-subtitle">{row.subtitle}</p>
                     <p className="admin-record-detail">{row.detail}</p>
                   </div>
+
                   <div className="admin-record-actions">
                     <button
                       className="admin-icon-button"
@@ -688,6 +841,7 @@ export function AdminPage() {
                     >
                       <Pencil size={17} />
                     </button>
+
                     {tab !== "usuarios" && (
                       <button
                         className="admin-icon-button danger"
@@ -705,18 +859,25 @@ export function AdminPage() {
             </div>
           )}
         </section>
+
         <section className="admin-section">
           <div className="admin-section-heading admin-detail-heading">
             <div>
               <h2>{content.title}</h2>
               <p className="admin-muted">{content.subtitle}</p>
             </div>
+
             {tab !== "usuarios" && (
-              <button className="admin-button primary" onClick={newRecord}>
+              <button
+                className="admin-button primary"
+                onClick={newRecord}
+                disabled={busy}
+              >
                 <Plus size={17} /> {content.action}
               </button>
             )}
           </div>
+
           {tab === "usuarios" && user ? (
             <form onSubmit={saveUser} className="admin-user-form">
               <div>
@@ -726,6 +887,7 @@ export function AdminPage() {
                   Matrícula {user.matricula ?? "—"}
                 </p>
               </div>
+
               <Field label="Limite de empréstimos">
                 <input
                   type="number"
@@ -736,6 +898,7 @@ export function AdminPage() {
                   onChange={(e) => setLimit(e.target.value)}
                 />
               </Field>
+
               <label className="admin-checkbox">
                 <input
                   type="checkbox"
@@ -744,6 +907,7 @@ export function AdminPage() {
                 />{" "}
                 Usuário bloqueado
               </label>
+
               <button
                 className="admin-button primary"
                 type="submit"
@@ -756,13 +920,19 @@ export function AdminPage() {
             <div className="admin-empty">
               <BookOpen size={32} />
               <p>{content.empty}</p>
+
               {tab !== "usuarios" && (
-                <button className="admin-button primary" onClick={newRecord}>
+                <button
+                  className="admin-button primary"
+                  onClick={newRecord}
+                  disabled={busy}
+                >
                   <Plus size={17} /> {content.action}
                 </button>
               )}
             </div>
           )}
+
           <div className="admin-note">
             <p>
               <ShieldCheck size={17} /> {content.note}
@@ -771,6 +941,7 @@ export function AdminPage() {
           </div>
         </section>
       </div>
+
       {open && (
         <div
           className="admin-modal-backdrop"
@@ -801,6 +972,7 @@ export function AdminPage() {
                     : content.subtitle}
                 </p>
               </div>
+
               <button
                 type="button"
                 className="admin-modal-close"
@@ -810,6 +982,7 @@ export function AdminPage() {
                 ×
               </button>
             </header>
+
             <form onSubmit={save} className="admin-form">
               {tab === "livros" ? (
                 <>
@@ -822,6 +995,7 @@ export function AdminPage() {
                         onChange={(e) => change("titulo", e.target.value)}
                       />
                     </Field>
+
                     <Field label="ISBN *">
                       <input
                         required
@@ -830,25 +1004,23 @@ export function AdminPage() {
                         onChange={(e) => change("isbn", e.target.value)}
                       />
                     </Field>
-                    <Field label="Categoria">
+
+                    <Field label="Categoria *">
                       <select
-                        value={book.categoriaId || "none"}
-                        onChange={(e) =>
-                          change(
-                            "categoriaId",
-                            e.target.value === "none" ? "" : e.target.value,
-                          )
-                        }
+                        required
+                        value={book.categoriaId}
+                        onChange={(e) => change("categoriaId", e.target.value)}
                       >
-                        <option value="none">Sem categoria</option>
+                        <option value="">Selecione uma categoria</option>
                         {categorias.map((c) => (
-                          <option key={c.id} value={c.id}>
+                          <option key={c.id} value={String(c.id)}>
                             {c.nome ?? c.name}
                           </option>
                         ))}
                       </select>
                     </Field>
                   </div>
+
                   <fieldset className="admin-author-picker">
                     <legend>Autores</legend>
                     <div className="admin-author-list">
@@ -856,32 +1028,28 @@ export function AdminPage() {
                         <label key={a.id} className="admin-checkbox">
                           <input
                             type="checkbox"
-                            checked={book.autores.includes(a.id)}
+                            checked={book.autores.includes(String(a.id))}
                             onChange={(e) =>
                               setBook((old) => ({
                                 ...old,
                                 autores: e.target.checked
-                                  ? [
-                                      ...(Array.isArray(old.autores)
-                                        ? old.autores
-                                        : []),
-                                      a.id,
-                                    ]
-                                  : (Array.isArray(old.autores)
-                                      ? old.autores
-                                      : []
-                                    ).filter((id) => id !== a.id),
+                                  ? [...old.autores, String(a.id)]
+                                  : old.autores.filter(
+                                      (id) => id !== String(a.id),
+                                    ),
                               }))
                             }
                           />
                           {a.nome ?? a.name}
                         </label>
                       ))}
+
                       {!autores.length && (
                         <p className="admin-muted">Nenhum autor cadastrado.</p>
                       )}
                     </div>
                   </fieldset>
+
                   <div className="admin-form-grid admin-form-divider">
                     <Field label="Editora">
                       <input
@@ -890,10 +1058,11 @@ export function AdminPage() {
                         onChange={(e) => change("editora", e.target.value)}
                       />
                     </Field>
+
                     <Field label="Ano de publicação">
                       <input
                         type="number"
-                        min="1000"
+                        min="1"
                         max="2100"
                         value={book.anoPublicacao}
                         onChange={(e) =>
@@ -901,6 +1070,7 @@ export function AdminPage() {
                         }
                       />
                     </Field>
+
                     <Field label="Quantidade *">
                       <input
                         required
@@ -911,6 +1081,7 @@ export function AdminPage() {
                         onChange={(e) => change("quantidade", e.target.value)}
                       />
                     </Field>
+
                     <Field label="Páginas">
                       <input
                         type="number"
@@ -920,6 +1091,7 @@ export function AdminPage() {
                         onChange={(e) => change("paginas", e.target.value)}
                       />
                     </Field>
+
                     <Field label="Edição">
                       <input
                         maxLength={100}
@@ -927,6 +1099,7 @@ export function AdminPage() {
                         onChange={(e) => change("edicao", e.target.value)}
                       />
                     </Field>
+
                     <Field label="Idioma">
                       <input
                         maxLength={100}
@@ -934,6 +1107,7 @@ export function AdminPage() {
                         onChange={(e) => change("idioma", e.target.value)}
                       />
                     </Field>
+
                     <Field label="Localização" wide>
                       <input
                         maxLength={200}
@@ -942,6 +1116,7 @@ export function AdminPage() {
                         onChange={(e) => change("localizacao", e.target.value)}
                       />
                     </Field>
+
                     <Field label="Sinopse" wide>
                       <textarea
                         rows={4}
@@ -950,6 +1125,7 @@ export function AdminPage() {
                         onChange={(e) => change("sinopse", e.target.value)}
                       />
                     </Field>
+
                     <Field label="URL da capa" wide>
                       <input
                         type="url"
@@ -959,6 +1135,7 @@ export function AdminPage() {
                         onChange={(e) => change("capaUrl", e.target.value)}
                       />
                     </Field>
+
                     {safeCover && !coverFailed && (
                       <div className="admin-cover-preview">
                         <img
@@ -968,11 +1145,13 @@ export function AdminPage() {
                         />
                       </div>
                     )}
+
                     {coverFailed && (
                       <p className="admin-muted admin-field-wide">
                         Não foi possível carregar a prévia desta capa.
                       </p>
                     )}
+
                     <Field label="Tags (separadas por vírgula)" wide>
                       <input
                         maxLength={1529}
@@ -993,6 +1172,7 @@ export function AdminPage() {
                       onChange={(e) => setName(e.target.value)}
                     />
                   </Field>
+
                   <div className="admin-form-grid">
                     <Field label="Nacionalidade *">
                       <input
@@ -1003,6 +1183,7 @@ export function AdminPage() {
                         placeholder="Brasileiro"
                       />
                     </Field>
+
                     <Field label="Data de nascimento *">
                       <input
                         required
@@ -1023,6 +1204,7 @@ export function AdminPage() {
                       onChange={(e) => setName(e.target.value)}
                     />
                   </Field>
+
                   <Field label="Descrição">
                     <textarea
                       rows={5}
@@ -1033,6 +1215,7 @@ export function AdminPage() {
                   </Field>
                 </>
               )}
+
               <div className="admin-form-actions">
                 <button
                   type="button"
@@ -1042,6 +1225,7 @@ export function AdminPage() {
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
                   className="admin-button primary"
