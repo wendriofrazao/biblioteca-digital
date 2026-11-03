@@ -390,10 +390,7 @@ export function TreeLegend() {
           {label}
         </li>
       ))}
-      <li className="tree-legend-note">
-        Folhas NIL (pretas) omitidas · arraste e use a roda para navegar · passe
-        o mouse sobre um nó para ver o livro e clique para abrir os detalhes
-      </li>
+
     </ul>
   );
 }

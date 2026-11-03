@@ -99,10 +99,11 @@ export function TreeControls({ ctl }) {
 
   return (
     <section className="tree-controls-panel">
+
       <div className="tree-controls-operations">
         <OpField
           label="Inserir valor"
-          placeholder="Ex: 42"
+          placeholder="ex.: 27"
           button="Inserir"
           icon="plus"
           onRun={ctl.insert}
@@ -110,8 +111,8 @@ export function TreeControls({ ctl }) {
 
         <OpField
           label="Pesquisar valor"
-          placeholder="Ex: 42"
-          button="Buscar"
+          placeholder="ex.: 19"
+          button="Pesquisar"
           icon="search"
           onRun={ctl.search}
           variant="secondary"
@@ -119,7 +120,7 @@ export function TreeControls({ ctl }) {
 
         <OpField
           label="Remover valor"
-          placeholder="Ex: 42"
+          placeholder="ex.: 38"
           button="Remover"
           icon="trash"
           onRun={ctl.remove}
@@ -148,7 +149,7 @@ export function TreeControls({ ctl }) {
 
         <button
           type="button"
-          className="tree-utility-button tree-utility-danger"
+          className="tree-utility-button"
           onClick={ctl.clear}
         >
           {ICONS.eraser}
@@ -177,4 +178,3 @@ export function TreeControls({ ctl }) {
     </section>
   );
 }
-

@@ -1,120 +1,229 @@
+
+/* Painel principal */
+
 .tree-controls-panel {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  border: 1px solid var(--tree-controls-border, #e5e7eb);
-  border-radius: 14px;
-  background: var(--tree-controls-bg, #ffffff);
-  color: var(--tree-controls-text, #1f2937);
+  gap: 14px;
+  padding: 0;
   box-sizing: border-box;
+  min-width: 0;
+
+  background: transparent;
+  color: #334155;
 }
+
+/* Título */
+
+.tree-controls-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #64748b;
+}
+
+/* Grid das operações */
 
 .tree-controls-operations {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
+
+/* Campos */
 
 .tree-op-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
+  width: 100%;
   min-width: 0;
+  margin: 0;
 }
 
 .tree-op-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--tree-controls-text, #374151);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
 }
+
+/* Input e botão lado a lado */
 
 .tree-op-row {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
   min-width: 0;
 }
 
+/* Input */
+
 .tree-op-input {
+  display: block;
   width: 100%;
   min-width: 0;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid var(--tree-controls-border, #d1d5db);
-  border-radius: 8px;
+  height: 34px;
+  padding: 0 11px;
+
+  border: 1px solid #e5e0d8;
+  border-radius: 9px;
+
   outline: none;
-  background: var(--tree-controls-input-bg, #ffffff);
-  color: var(--tree-controls-text, #1f2937);
-  font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #faf9f6;
+  color: #334155;
+
+  font-family: inherit;
+  font-size: 13px;
   box-sizing: border-box;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .tree-op-input:focus {
-  border-color: var(--tree-controls-primary, #64748b);
-  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.12);
+  border-color: #0c5360;
+  box-shadow: 0 0 0 2px rgba(12, 83, 96, 0.1);
 }
 
 .tree-op-input::placeholder {
-  color: var(--tree-controls-muted, #9ca3af);
+  color: #8290a0;
 }
+
+/* Botões das operações */
 
 .tree-op-button,
 .tree-utility-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 0 13px;
+  gap: 6px;
+
   border: 1px solid transparent;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
+  border-radius: 9px;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+  box-sizing: border-box;
+
+  transition: background 0.2s, border-color 0.2s,
+    transform 0.2s, opacity 0.2s;
+}
+
+.tree-op-button {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 8px;
+  white-space: nowrap;
 }
 
 .tree-op-button svg,
 .tree-utility-button svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
+
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
+/* Inserir */
+
 .tree-op-button-default {
-  background: var(--tree-controls-primary, #334155);
+  background: #07505e;
   color: #ffffff;
 }
 
 .tree-op-button-default:hover:not(:disabled) {
-  background: var(--tree-controls-primary-hover, #1e293b);
+  background: #063e49;
 }
 
+/* Pesquisar */
+
 .tree-op-button-secondary {
-  background: var(--tree-controls-secondary-bg, #f1f5f9);
-  border-color: var(--tree-controls-border, #e2e8f0);
-  color: var(--tree-controls-text, #334155);
+  background: #f3f0e7;
+  border-color: #eee9dc;
+  color: #07505e;
 }
 
 .tree-op-button-secondary:hover:not(:disabled) {
-  background: var(--tree-controls-secondary-hover, #e2e8f0);
+  background: #eae5d8;
 }
 
+/* Remover */
+
 .tree-op-button-destructive {
-  background: var(--tree-controls-danger, #dc2626);
+  background: #ce3438;
   color: #ffffff;
 }
 
 .tree-op-button-destructive:hover:not(:disabled) {
-  background: var(--tree-controls-danger-hover, #b91c1c);
+  background: #b8272c;
 }
+
+/* Grid das ações auxiliares */
+
+.tree-utility-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+/* Botões auxiliares */
+
+.tree-utility-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 31px;
+  padding: 5px 7px;
+
+  background: #faf9f6;
+  border-color: #e5e0d8;
+  color: #334155;
+
+  white-space: nowrap;
+  font-size: 11px;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.tree-utility-button:hover:not(:disabled) {
+  background: #f0eee8;
+  border-color: #cbd5e1;
+}
+
+.tree-utility-button:active:not(:disabled),
+.tree-op-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Limpar árvore */
+
+.tree-utility-button:nth-child(3) {
+  color: #334155;
+}
+
+/* Desabilitados */
 
 .tree-op-button:disabled,
 .tree-utility-button:disabled {
@@ -122,40 +231,16 @@
   cursor: not-allowed;
 }
 
-.tree-utility-actions {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.tree-utility-button {
-  width: 100%;
-  min-height: 38px;
-  background: var(--tree-controls-secondary-bg, #f8fafc);
-  border-color: var(--tree-controls-border, #e2e8f0);
-  color: var(--tree-controls-text, #475569);
-}
-
-.tree-utility-button:hover:not(:disabled) {
-  background: var(--tree-controls-secondary-hover, #e2e8f0);
-  border-color: var(--tree-controls-primary, #94a3b8);
-}
-
-.tree-utility-danger {
-  color: var(--tree-controls-danger, #dc2626);
-}
-
-.tree-utility-danger:hover:not(:disabled) {
-  background: #fef2f2;
-  border-color: #fecaca;
-}
+/* Feedback */
 
 .tree-feedback {
   margin: 0;
-  padding: 11px 14px;
+  padding: 10px 12px;
+
   border: 1px solid transparent;
   border-radius: 8px;
-  font-size: 13px;
+
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -183,39 +268,31 @@
   border-color: #bfdbfe;
 }
 
-@media (max-width: 900px) {
-  .tree-controls-operations {
-    grid-template-columns: 1fr;
-  }
+/* Telas pequenas */
 
-  .tree-utility-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 480px) {
-  .tree-controls-panel {
-    padding: 14px;
-  }
-
+@media (max-width: 320px) {
   .tree-op-row {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) 110px;
+    gap: 6px;
   }
 
   .tree-op-button {
-    width: 100%;
+    font-size: 11px;
   }
 
-  .tree-utility-actions {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 360px) {
   .tree-utility-button {
-    white-space: normal;
+    font-size: 10px;
+    gap: 4px;
+    padding: 5px 4px;
+  }
+
+  .tree-utility-button svg {
+    width: 13px;
+    height: 13px;
   }
 }
+
+/* Acessibilidade */
 
 @media (prefers-reduced-motion: reduce) {
   .tree-op-input,
