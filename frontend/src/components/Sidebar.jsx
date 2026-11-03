@@ -70,7 +70,7 @@ export function LeftSidebar({
       id: "arvore",
       label: "Árvore RB",
       Icon: GitFork,
-      link: "/arvore",
+      link: "/tree",
     },
   ];
 

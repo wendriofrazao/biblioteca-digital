@@ -1,0 +1,331 @@
+/* Área de visualização */
+.tree-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--tree-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--tree-background, #ffffff);
+}
+
+.tree-viewport {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.tree-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.tree-transform {
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  transition: transform 120ms ease-out;
+}
+
+.tree-viewport.is-dragging .tree-transform {
+  transition: none;
+}
+
+.tree-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tree-edge {
+  stroke: var(--tree-edge, #a1a1aa);
+  stroke-width: 1.8;
+  transition: stroke 180ms ease, stroke-width 180ms ease;
+}
+
+.tree-edge.edge-active {
+  stroke: var(--tree-edge-active, #d97706);
+  stroke-width: 3;
+}
+
+/* Nós */
+.tree-node {
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tree-node-appear 260ms ease both;
+}
+
+.node-red {
+  fill: #dc4545;
+  stroke: #a92d2d;
+  stroke-width: 1.5;
+}
+
+.node-black {
+  fill: #252525;
+  stroke: #080808;
+  stroke-width: 1.5;
+}
+
+.node-label {
+  fill: #ffffff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.node-ring {
+  fill: none;
+  stroke-width: 3;
+  opacity: 0.95;
+  animation: tree-ring-appear 220ms ease both;
+}
+
+.ring-current {
+  stroke: #3b82f6;
+}
+
+.ring-path {
+  stroke: #eab308;
+  stroke-dasharray: 4 3;
+}
+
+.ring-rotated {
+  stroke: #a855f7;
+}
+
+.ring-recolor {
+  stroke: #06b6d4;
+}
+
+.ring-related {
+  stroke: #f97316;
+}
+
+.ring-found {
+  stroke: #22c55e;
+  stroke-width: 4;
+}
+
+.ring-removed {
+  stroke: #ef4444;
+  stroke-dasharray: 4 3;
+}
+
+/* Dica com os dados do livro */
+.book-tooltip {
+  filter: drop-shadow(0 3px 8px rgb(0 0 0 / 15%));
+}
+
+.book-tooltip-bg {
+  fill: var(--tree-tooltip-background, #ffffff);
+  stroke: var(--tree-border, #e5e7eb);
+  stroke-width: 1;
+}
+
+.book-tooltip-title {
+  fill: var(--tree-text, #18181b);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.book-tooltip-sub {
+  fill: var(--tree-muted, #71717a);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.book-tooltip-hint {
+  fill: var(--tree-muted, #a1a1aa);
+  font-family: inherit;
+  font-size: 10px;
+}
+
+/* Estado vazio */
+.tree-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.tree-empty-icon {
+  width: 48px;
+  height: 48px;
+  border: 2px dashed var(--tree-muted, #a1a1aa);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.tree-empty-title {
+  margin: 0;
+  color: var(--tree-text, #27272a);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tree-empty-description {
+  margin: 0;
+  color: var(--tree-muted, #71717a);
+  font-size: 13px;
+}
+
+/* Controles de zoom */
+.tree-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 5px;
+}
+
+.tree-control-button {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--tree-border, #d4d4d8);
+  border-radius: 7px;
+  background: var(--tree-control-background, rgb(255 255 255 / 88%));
+  color: var(--tree-text, #27272a);
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.tree-control-button:hover {
+  border-color: var(--tree-control-hover-border, #a1a1aa);
+  background: var(--tree-control-hover, #f4f4f5);
+}
+
+.tree-control-button:focus-visible {
+  outline: 2px solid var(--tree-focus, #3b82f6);
+  outline-offset: 2px;
+}
+
+.tree-fit-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Legenda */
+.tree-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--tree-muted, #71717a);
+  font-size: 12px;
+  list-style: none;
+}
+
+.tree-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+}
+
+.legend-red {
+  background: #dc4545;
+}
+
+.legend-black {
+  background: #252525;
+}
+
+.legend-current {
+  border-color: #3b82f6;
+}
+
+.legend-path {
+  border-color: #eab308;
+}
+
+.legend-rotated {
+  border-color: #a855f7;
+}
+
+.legend-recolor {
+  border-color: #06b6d4;
+}
+
+.legend-found {
+  border-color: #22c55e;
+}
+
+.legend-removed {
+  border-color: #ef4444;
+}
+
+.tree-legend .tree-legend-note {
+  flex-basis: 100%;
+  color: var(--tree-muted, #a1a1aa);
+  line-height: 1.5;
+}
+
+@keyframes tree-node-appear {
+  from {
+    opacity: 0;
+    scale: 0.55;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes tree-ring-appear {
+  from {
+    opacity: 0;
+    scale: 0.8;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree-transform,
+  .tree-edge,
+  .tree-node,
+  .node-ring,
+  .tree-control-button {
+    animation: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,226 @@
+.tree-controls-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid var(--tree-controls-border, #e5e7eb);
+  border-radius: 14px;
+  background: var(--tree-controls-bg, #ffffff);
+  color: var(--tree-controls-text, #1f2937);
+  box-sizing: border-box;
+}
+
+.tree-controls-operations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.tree-op-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tree-op-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tree-controls-text, #374151);
+}
+
+.tree-op-row {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tree-op-input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--tree-controls-border, #d1d5db);
+  border-radius: 8px;
+  outline: none;
+  background: var(--tree-controls-input-bg, #ffffff);
+  color: var(--tree-controls-text, #1f2937);
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.tree-op-input:focus {
+  border-color: var(--tree-controls-primary, #64748b);
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.12);
+}
+
+.tree-op-input::placeholder {
+  color: var(--tree-controls-muted, #9ca3af);
+}
+
+.tree-op-button,
+.tree-utility-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+}
+
+.tree-op-button svg,
+.tree-utility-button svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tree-op-button-default {
+  background: var(--tree-controls-primary, #334155);
+  color: #ffffff;
+}
+
+.tree-op-button-default:hover:not(:disabled) {
+  background: var(--tree-controls-primary-hover, #1e293b);
+}
+
+.tree-op-button-secondary {
+  background: var(--tree-controls-secondary-bg, #f1f5f9);
+  border-color: var(--tree-controls-border, #e2e8f0);
+  color: var(--tree-controls-text, #334155);
+}
+
+.tree-op-button-secondary:hover:not(:disabled) {
+  background: var(--tree-controls-secondary-hover, #e2e8f0);
+}
+
+.tree-op-button-destructive {
+  background: var(--tree-controls-danger, #dc2626);
+  color: #ffffff;
+}
+
+.tree-op-button-destructive:hover:not(:disabled) {
+  background: var(--tree-controls-danger-hover, #b91c1c);
+}
+
+.tree-op-button:disabled,
+.tree-utility-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tree-utility-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tree-utility-button {
+  width: 100%;
+  min-height: 38px;
+  background: var(--tree-controls-secondary-bg, #f8fafc);
+  border-color: var(--tree-controls-border, #e2e8f0);
+  color: var(--tree-controls-text, #475569);
+}
+
+.tree-utility-button:hover:not(:disabled) {
+  background: var(--tree-controls-secondary-hover, #e2e8f0);
+  border-color: var(--tree-controls-primary, #94a3b8);
+}
+
+.tree-utility-danger {
+  color: var(--tree-controls-danger, #dc2626);
+}
+
+.tree-utility-danger:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.tree-feedback {
+  margin: 0;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tree-feedback-success {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.tree-feedback-error {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.tree-feedback-warning {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.tree-feedback-info {
+  color: #1e40af;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+@media (max-width: 900px) {
+  .tree-controls-operations {
+    grid-template-columns: 1fr;
+  }
+
+  .tree-utility-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .tree-controls-panel {
+    padding: 14px;
+  }
+
+  .tree-op-row {
+    flex-direction: column;
+  }
+
+  .tree-op-button {
+    width: 100%;
+  }
+
+  .tree-utility-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px) {
+  .tree-utility-button {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree-op-input,
+  .tree-op-button,
+  .tree-utility-button {
+    transition: none;
+  }
+}

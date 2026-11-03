@@ -1,0 +1,211 @@
+.tree-stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  color: var(--tree-stats-text, #1f2937);
+}
+
+.tree-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tree-stat {
+  min-width: 0;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--tree-stats-border, #e5e7eb);
+}
+
+.tree-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tree-stats-muted, #6b7280);
+}
+
+.tree-stat-value {
+  margin-top: 3px;
+  font-family: monospace;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--tree-stats-text, #1f2937);
+  overflow-wrap: anywhere;
+}
+
+.tree-last-operation {
+  font-size: 12px;
+  color: var(--tree-stats-muted, #6b7280);
+}
+
+.tree-last-operation strong {
+  color: var(--tree-stats-text, #1f2937);
+  font-weight: 600;
+}
+
+.tree-validity {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.tree-validity-ok {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.tree-validity-bad {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.tree-status-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tree-validity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tree-validity-title {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.tree-validity-error {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tree-stats-description {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tree-stats-muted, #6b7280);
+}
+
+.tree-traversal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-traversal-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tree-traversal-buttons button {
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tree-stats-muted, #6b7280);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.tree-traversal-buttons button:hover {
+  background: var(--tree-stats-hover, #f1f5f9);
+  color: var(--tree-stats-text, #1f2937);
+}
+
+.tree-traversal-buttons button.active {
+  background: var(--tree-stats-active-bg, #e2e8f0);
+  color: var(--tree-stats-text, #1f2937);
+}
+
+.tree-traversal-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 8px;
+  border: 1px solid var(--tree-stats-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--tree-stats-sequence-bg, #f8fafc);
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.tree-sequence-value {
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--tree-stats-value-bg, #e5e7eb);
+  color: var(--tree-stats-text, #374151);
+}
+
+.tree-sequence-empty {
+  color: var(--tree-stats-muted, #9ca3af);
+}
+
+.tree-complexity {
+  padding-top: 12px;
+  border-top: 1px solid var(--tree-stats-border, #e5e7eb);
+}
+
+.tree-complexity-heading {
+  margin-bottom: 10px;
+  color: var(--tree-stats-muted, #6b7280);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tree-complexity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.tree-complexity-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--tree-stats-muted, #6b7280);
+}
+
+.tree-complexity-item strong {
+  color: var(--tree-stats-primary, #2563eb);
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.tree-complexity .tree-stats-description {
+  margin-top: 10px;
+}
+
+@media (max-width: 420px) {
+  .tree-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tree-traversal-buttons button {
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+}

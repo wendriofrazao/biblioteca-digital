@@ -8,6 +8,7 @@ import { Dashboard } from "../pages/dashboard.jsx";
 import { Catalogo } from "../pages/catalogo.jsx";
 import { DashboardLoan } from "../pages/dashboardLoan.jsx";
 import { Staff } from "../pages/dashboardAdmin.jsx";
+import { DashboardTree } from "../pages/dashboardTree.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
       {
         path: "/loan",
         element: <DashboardLoan />,
+      },
+      {
+        path: "/tree",
+        element: <DashboardTree />,
       },
       {
         path: "/staff",
