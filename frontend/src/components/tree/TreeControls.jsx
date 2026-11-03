@@ -57,9 +57,9 @@ function OpField({
   function handleSubmit(event) {
     event.preventDefault();
 
-    if (value.trim() === "") return;
+    if (!value.trim() || typeof onRun !== "function") return;
 
-    const result = onRun(value);
+    const result = onRun(Number(value));
 
     if (result !== false) {
       setValue("");
@@ -84,7 +84,7 @@ function OpField({
         <button
           type="submit"
           className={`tree-op-button tree-op-button-${variant}`}
-          disabled={!value.trim()}
+          disabled={!value.trim() || typeof onRun !== "function"}
         >
           {ICONS[icon]}
           <span>{button}</span>
@@ -99,7 +99,6 @@ export function TreeControls({ ctl }) {
 
   return (
     <section className="tree-controls-panel">
-
       <div className="tree-controls-operations">
         <OpField
           label="Inserir valor"
@@ -133,6 +132,7 @@ export function TreeControls({ ctl }) {
           type="button"
           className="tree-utility-button"
           onClick={ctl.loadExample}
+          disabled={!ctl.loadExample}
         >
           {ICONS.sparkles}
           <span>Inserir exemplo</span>
@@ -141,7 +141,8 @@ export function TreeControls({ ctl }) {
         <button
           type="button"
           className="tree-utility-button"
-          onClick={() => ctl.randomTree()}
+          onClick={ctl.randomTree}
+          disabled={!ctl.randomTree}
         >
           {ICONS.shuffle}
           <span>Árvore aleatória</span>
@@ -151,6 +152,7 @@ export function TreeControls({ ctl }) {
           type="button"
           className="tree-utility-button"
           onClick={ctl.clear}
+          disabled={!ctl.clear}
         >
           {ICONS.eraser}
           <span>Limpar árvore</span>
@@ -160,7 +162,7 @@ export function TreeControls({ ctl }) {
           type="button"
           className="tree-utility-button"
           onClick={ctl.undo}
-          disabled={!ctl.canUndo}
+          disabled={!ctl.canUndo || !ctl.undo}
         >
           {ICONS.undo}
           <span>Desfazer</span>

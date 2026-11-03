@@ -47,10 +47,19 @@ const ICONS = {
 };
 
 export function TreeAnimationControls({ ctl }) {
-  const { steps, stepIndex, playback: pb } = ctl;
-  const hasSteps = steps.length > 0;
+  if (!ctl) return null;
 
-  const speedValue = Number(pb.speed);
+  const steps = Array.isArray(ctl.steps) ? ctl.steps : [];
+  const stepIndex = Number.isInteger(ctl.stepIndex) ? ctl.stepIndex : 0;
+
+  const pb = ctl.playback ?? {};
+
+  const hasSteps = steps.length > 0;
+  const speedValue = Number(pb.speed ?? 1);
+
+  const safeSpeed = Number.isFinite(speedValue)
+    ? Math.min(4, Math.max(0.25, speedValue))
+    : 1;
 
   return (
     <div className="tree-animation-controls">
@@ -60,7 +69,7 @@ export function TreeAnimationControls({ ctl }) {
             type="button"
             className="tree-action-button tree-primary-button"
             onClick={pb.pause}
-            disabled={!hasSteps}
+            disabled={!hasSteps || !pb.pause}
           >
             {ICONS.pause}
             <span>Pausar</span>
@@ -70,7 +79,7 @@ export function TreeAnimationControls({ ctl }) {
             type="button"
             className="tree-action-button tree-primary-button"
             onClick={pb.play}
-            disabled={!hasSteps}
+            disabled={!hasSteps || !pb.play}
           >
             {ICONS.play}
             <span>Reproduzir</span>
@@ -81,7 +90,7 @@ export function TreeAnimationControls({ ctl }) {
           type="button"
           className="tree-icon-button"
           onClick={pb.prev}
-          disabled={!hasSteps || stepIndex === 0}
+          disabled={!hasSteps || stepIndex === 0 || !pb.prev}
           aria-label="Passo anterior"
           title="Passo anterior"
         >
@@ -92,7 +101,7 @@ export function TreeAnimationControls({ ctl }) {
           type="button"
           className="tree-icon-button"
           onClick={pb.next}
-          disabled={!hasSteps || stepIndex >= steps.length - 1}
+          disabled={!hasSteps || stepIndex >= steps.length - 1 || !pb.next}
           aria-label="Passo seguinte"
           title="Passo seguinte"
         >
@@ -103,7 +112,7 @@ export function TreeAnimationControls({ ctl }) {
           type="button"
           className="tree-icon-button"
           onClick={pb.restart}
-          disabled={!hasSteps}
+          disabled={!hasSteps || !pb.restart}
           aria-label="Reiniciar animação"
           title="Reiniciar animação"
         >
@@ -127,35 +136,43 @@ export function TreeAnimationControls({ ctl }) {
           min="0.25"
           max="4"
           step="0.25"
-          value={speedValue}
-          onChange={(event) => pb.setSpeed(Number(event.target.value))}
+          value={safeSpeed}
+          onChange={(event) => pb.setSpeed?.(Number(event.target.value))}
+          disabled={!pb.setSpeed}
           aria-label="Velocidade"
           style={{
-            "--slider-progress": `${((speedValue - 0.25) / (4 - 0.25)) * 100}%`,
+            "--slider-progress": `${((safeSpeed - 0.25) / (4 - 0.25)) * 100}%`,
           }}
         />
 
-        <span className="tree-speed-value">{speedValue}×</span>
+        <span className="tree-speed-value">{safeSpeed}×</span>
       </div>
 
       {hasSteps ? (
         <ol className="tree-step-list">
           {steps.map((step, index) => {
             const active = index === stepIndex;
-            const label = KIND_LABEL[step.kind] || step.kind;
+            const kind = step?.kind ?? "unknown";
+            const label = KIND_LABEL[kind] || kind;
 
             return (
-              <li key={`${step.kind}-${index}`}>
+              <li key={`${kind}-${index}`}>
                 <button
                   type="button"
-                  onClick={() => pb.goTo(index)}
-                  className={`tree-step-item ${active ? "tree-step-item-active" : ""}`}
+                  onClick={() => pb.goTo?.(index)}
+                  disabled={!pb.goTo}
+                  className={`tree-step-item ${
+                    active ? "tree-step-item-active" : ""
+                  }`}
                   aria-current={active ? "step" : undefined}
                 >
-                  <span className={`tree-step-tag tree-step-${step.kind}`}>
+                  <span className={`tree-step-tag tree-step-${kind}`}>
                     {label}
                   </span>
-                  <span className="tree-step-message">{step.message}</span>
+
+                  <span className="tree-step-message">
+                    {step?.message ?? "Etapa da operação"}
+                  </span>
                 </button>
               </li>
             );

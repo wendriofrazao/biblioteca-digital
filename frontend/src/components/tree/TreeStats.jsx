@@ -5,7 +5,7 @@ function Stat({ label, value, hint }) {
   return (
     <div className="tree-stat" title={hint}>
       <div className="tree-stat-label">{label}</div>
-      <div className="tree-stat-value">{value}</div>
+      <div className="tree-stat-value">{value ?? 0}</div>
     </div>
   );
 }
@@ -33,21 +33,27 @@ export function TreeStats({ ctl }) {
 
   if (!ctl) return null;
 
-  const { stats, result, step } = ctl;
+  const stats = ctl.stats ?? {};
+  const result = ctl.result ?? {};
+  const step = ctl.step ?? null;
+
+  const validation = stats.validation ?? null;
 
   const sequences = {
-    in: stats.inOrder,
-    pre: stats.preOrder,
-    post: stats.postOrder,
+    in: Array.isArray(stats.inOrder) ? stats.inOrder : [],
+    pre: Array.isArray(stats.preOrder) ? stats.preOrder : [],
+    post: Array.isArray(stats.postOrder) ? stats.postOrder : [],
   };
 
-  const seq = sequences[order] || [];
+  const seq = sequences[order];
 
   const rotations = step
-    ? `${step.rotations}/${result?.rotations ?? 0}`
-    : (result?.rotations ?? 0);
+    ? `${step.rotations ?? 0}/${result.rotations ?? 0}`
+    : (result.rotations ?? 0);
 
-  const comparisons = step ? step.comparisons : (result?.comparisons ?? 0);
+  const comparisons = step
+    ? (step.comparisons ?? 0)
+    : (result.comparisons ?? 0);
 
   return (
     <div className="tree-stats-container">
@@ -63,42 +69,42 @@ export function TreeStats({ ctl }) {
         <Stat
           label="Altura negra"
           value={stats.blackHeight}
-          hint="Nós pretos da raiz (inclusive) até uma folha NIL (exclusive)."
+          hint="Nós pretos da raiz até uma folha NIL."
         />
 
-        <Stat
-          label="Rotações"
-          value={rotations}
-          hint="Rotações até a etapa atual / total da operação."
-        />
+        <Stat label="Rotações" value={rotations} />
 
         <Stat label="Comparações" value={comparisons} />
 
-        <Stat label="Recolorações" value={result?.recolorings ?? 0} />
+        <Stat label="Recolorações" value={result.recolorings} />
       </div>
 
       <div className="tree-last-operation">
-        Última operação: <strong>{ctl.lastOp}</strong>
+        Última operação: <strong>{ctl.lastOp ?? "Nenhuma"}</strong>
       </div>
 
       <div
         className={
-          stats.validation.valid
+          validation?.valid
             ? "tree-validity tree-validity-ok"
-            : "tree-validity tree-validity-bad"
+            : validation
+              ? "tree-validity tree-validity-bad"
+              : "tree-validity"
         }
       >
-        <StatusIcon valid={stats.validation.valid} />
+        <StatusIcon valid={Boolean(validation?.valid)} />
 
         <div className="tree-validity-content">
           <div className="tree-validity-title">
-            {stats.validation.valid
-              ? "Todas as 5 propriedades Rubro-Negras são satisfeitas"
-              : "Propriedades violadas"}
+            {!validation
+              ? "Validação não disponível"
+              : validation.valid
+                ? "Todas as 5 propriedades Rubro-Negras são satisfeitas"
+                : "Propriedades violadas"}
           </div>
 
-          {stats.validation.errors.map((error) => (
-            <div className="tree-validity-error" key={error}>
+          {(validation?.errors ?? []).map((error, index) => (
+            <div className="tree-validity-error" key={`${error}-${index}`}>
               {error}
             </div>
           ))}
@@ -163,12 +169,10 @@ export function TreeStats({ ctl }) {
         </div>
 
         <p className="tree-stats-description">
-          Como nenhum caminho tem dois vermelhos seguidos e todos têm a mesma
-          altura negra, o caminho mais longo é no máximo o dobro do mais curto:
-          a altura fica ≤ 2·log₂(n+1), garantindo O(log n) no pior caso.
+          Em uma árvore Rubro-Negra válida, a altura é limitada por 2·log₂(n+1),
+          garantindo operações de pesquisa, inserção e remoção em O(log n).
         </p>
       </div>
     </div>
   );
 }
-

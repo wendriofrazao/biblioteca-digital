@@ -1,3 +1,4 @@
+
 import "../styles/components/LibraryPage.css";
 
 import {
@@ -32,8 +33,8 @@ function LayersIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none">
       <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
-      <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
-      <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+      <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a1 1 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+      <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a1 1 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
     </svg>
   );
 }
@@ -51,8 +52,14 @@ function SummaryItem({ icon, value, label }) {
   return (
     <div className="library-summary-item">
       <div className="library-summary-icon">{icon}</div>
-      <p className="library-summary-value">{value}</p>
-      <span className="library-summary-label">{label}</span>
+
+      <p className="library-summary-value">
+        {value ?? 0}
+      </p>
+
+      <span className="library-summary-label">
+        {label}
+      </span>
     </div>
   );
 }
@@ -64,14 +71,25 @@ export function LibraryPage({
   bookFor,
   onNodeClick,
 }) {
-  if (!ctl || !ctl.stats) return null;
+  if (!ctl) return null;
 
-  const { stats } = ctl;
+  const stats = ctl.stats ?? {};
+
+  const validation = stats.validation;
+
+  const validationStatus =
+    validation == null
+      ? "Não verificada"
+      : validation.valid
+        ? "Válida"
+        : "Inválida";
 
   return (
     <main className="library-main">
       <header className="library-heading">
-        <p className="library-welcome">Painel do catálogo</p>
+        <p className="library-welcome">
+          Painel do catálogo
+        </p>
 
         <h1>
           Árvore Rubro-Negra<span>.</span>
@@ -103,7 +121,7 @@ export function LibraryPage({
 
         <SummaryItem
           icon={<ShieldIcon />}
-          value={stats.validation.valid ? "Válida" : "Inválida"}
+          value={validationStatus}
           label="Estado da árvore"
         />
       </section>
@@ -123,6 +141,7 @@ export function LibraryPage({
 
           <div className="library-workspace-note">
             <p>Índice do catálogo</p>
+
             <TreeLegend />
           </div>
         </div>
@@ -130,16 +149,19 @@ export function LibraryPage({
         <aside className="library-workspace-side">
           <section className="library-workspace-section">
             <h2>Operações</h2>
+
             <TreeControls ctl={ctl} />
           </section>
 
           <section className="library-workspace-section">
             <h2>Animação</h2>
+
             <TreeAnimationControls ctl={ctl} />
           </section>
 
           <section className="library-workspace-section">
             <h2>Estatísticas</h2>
+
             <TreeStats ctl={ctl} />
           </section>
         </aside>

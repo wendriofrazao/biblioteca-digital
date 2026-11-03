@@ -1,305 +1,183 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RedBlackTree } from "../lib/RedBlackTree.jsx";
-import { CATALOG } from "../lib/catalog.jsx";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-export function useRedBlackTree() {
-  const treeRef = useRef(null);
+import {
+  getRedBlackTree,
+  getRedBlackTreeStats,
+  searchBookInTree,
+} from "../service/redBlackTree.service.jsx";
 
-  if (!treeRef.current) {
-    treeRef.current = RedBlackTree.from(CATALOG);
+// Extrai a raiz independentemente de a resposta vir diretamente
+// ou dentro de uma resposta do Axios.
+function getTreeRoot(response) {
+  let data = response;
+
+  // Resposta Axios: response.data
+  if (data?.data && !("key" in data)) {
+    data = data.data;
   }
 
-  const [version, setVersion] = useState(0);
-  const [history, setHistory] = useState([]);
-  const [result, setResult] = useState(null);
-  const [lastOp, setLastOp] = useState("Árvore de exemplo carregada");
-  const [stepIndex, setStepIndex] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [feedback, setFeedback] = useState(null);
+  // Resposta da API: { success, message, data }
+  if (data && "success" in data) {
+    data = data.data;
+  }
 
-  const steps = result?.steps ?? [];
+  return data ?? null;
+}
 
-  const bump = () => setVersion((v) => v + 1);
+// Converte a árvore da API para o formato usado pelo visualizador.
+function convertApiTree(response) {
+  const root = getTreeRoot(response);
 
-  const pushUndo = (label) => {
-    setHistory((h) => [
-      ...h.slice(-49),
-      {
-        tree: treeRef.current.clone(),
-        label,
-      },
-    ]);
-  };
+  const nodes = {};
+  const books = {};
 
-  const runResult = (r, label) => {
-    setResult(r);
-    setStepIndex(0);
-    setPlaying(r.steps.length > 1);
-    setLastOp(label);
+  function traverse(node) {
+    if (!node) return;
 
-    setFeedback({
-      kind: r.success ? (r.type === "search" ? "info" : "success") : "error",
-      text: r.message,
-    });
+    const id = node.key;
 
-    bump();
-  };
-
-  const parse = (raw) => {
-    const value = String(raw).trim();
-
-    if (!/^-?\d+$/.test(value)) {
-      setFeedback({
-        kind: "error",
-        text: "Entrada inválida: introduza um número inteiro.",
-      });
-
-      return null;
-    }
-
-    const number = Number(value);
-
-    if (Math.abs(number) > 99999) {
-      setFeedback({
-        kind: "error",
-        text: "Use valores entre -99999 e 99999.",
-      });
-
-      return null;
-    }
-
-    return number;
-  };
-
-  const insert = useCallback((raw) => {
-    const value = parse(raw);
-
-    if (value === null) return false;
-
-    const backup = treeRef.current.clone();
-    const operation = treeRef.current.insert(value);
-
-    if (operation.success) {
-      setHistory((h) => [
-        ...h.slice(-49),
-        {
-          tree: backup,
-          label: `Inserir ${value}`,
-        },
-      ]);
-    }
-
-    runResult(operation, `Inserir ${value}`);
-
-    return operation.success;
-  }, []);
-
-  const remove = useCallback((raw) => {
-    const value = parse(raw);
-
-    if (value === null) return false;
-
-    const backup = treeRef.current.clone();
-    const operation = treeRef.current.delete(value);
-
-    if (operation.success) {
-      setHistory((h) => [
-        ...h.slice(-49),
-        {
-          tree: backup,
-          label: `Remover ${value}`,
-        },
-      ]);
-    }
-
-    runResult(operation, `Remover ${value}`);
-
-    return operation.success;
-  }, []);
-
-  const search = useCallback((raw) => {
-    const value = typeof raw === "number" ? raw : parse(raw);
-
-    if (value === null) return false;
-
-    const operation = treeRef.current.search(value);
-
-    runResult(operation, `Pesquisar ${value}`);
-
-    return operation.success;
-  }, []);
-
-  const replaceTree = (tree, label, message) => {
-    pushUndo(label);
-
-    treeRef.current = tree;
-
-    setResult(null);
-    setPlaying(false);
-    setLastOp(label);
-
-    setFeedback({
-      kind: "success",
-      text: message,
-    });
-
-    bump();
-  };
-
-  const loadExample = useCallback(() => {
-    replaceTree(
-      RedBlackTree.from(EXAMPLE_VALUES),
-      "Inserir exemplo",
-      `Exemplo inserido: ${EXAMPLE_VALUES.join(", ")}.`,
-    );
-  }, []);
-
-  const randomTree = useCallback((count = 12) => {
-    const values = new Set();
-
-    while (values.size < count) {
-      values.add(1 + Math.floor(Math.random() * 99));
-    }
-
-    const numbers = [...values];
-
-    replaceTree(
-      RedBlackTree.from(numbers),
-      "Árvore aleatória",
-      `Árvore aleatória gerada com ${count} valores: ${numbers.join(", ")}.`,
-    );
-  }, []);
-
-  const clear = useCallback(() => {
-    replaceTree(new RedBlackTree(), "Limpar árvore", "A árvore foi limpa.");
-  }, []);
-
-  const undo = useCallback(() => {
-    setHistory((h) => {
-      const last = h[h.length - 1];
-
-      if (!last) return h;
-
-      treeRef.current = last.tree;
-
-      setResult(null);
-      setPlaying(false);
-      setLastOp(`Desfazer (${last.label})`);
-
-      setFeedback({
-        kind: "info",
-        text: `Operação desfeita: ${last.label}.`,
-      });
-
-      bump();
-
-      return h.slice(0, -1);
-    });
-  }, []);
-
-  // Reprodução das etapas da operação
-  useEffect(() => {
-    if (!playing) return;
-
-    if (stepIndex >= steps.length - 1) {
-      setPlaying(false);
-      return;
-    }
-
-    const id = setTimeout(() => {
-      setStepIndex((index) => Math.min(index + 1, steps.length - 1));
-    }, 1300 / speed);
-
-    return () => clearTimeout(id);
-  }, [playing, stepIndex, steps.length, speed]);
-
-  const step = steps[stepIndex] ?? null;
-
-  // Estatísticas da árvore
-  const stats = useMemo(() => {
-    const tree = treeRef.current;
-    const validation = tree.validate();
-
-    return {
-      nodeCount: tree.getNodeCount(),
-      height: tree.getHeight(),
-      blackHeight: validation.blackHeight,
-      validation,
-      inOrder: tree.inOrderTraversal(),
-      preOrder: tree.preOrderTraversal(),
-      postOrder: tree.postOrderTraversal(),
+    nodes[id] = {
+      id,
+      value: id,
+      color: node.color,
+      left: node.left?.key ?? null,
+      right: node.right?.key ?? null,
     };
-  }, [version]);
 
-  // Snapshot atual da árvore
-  const liveSnapshot = useMemo(() => {
-    return treeRef.current.snapshot();
-  }, [version]);
+    // Mantém os dados completos do livro associados ao nó.
+    books[id] = node.value;
 
-  const snapshot = step?.snapshot ?? liveSnapshot;
+    traverse(node.left);
+    traverse(node.right);
+  }
+
+  traverse(root);
 
   return {
-    tree: treeRef.current,
-    snapshot,
-    step,
-    steps,
-    stepIndex,
-    result,
-    stats,
-    lastOp,
-    feedback,
-
-    canUndo: history.length > 0,
-
-    playback: {
-      playing,
-      speed,
-      setSpeed,
-
-      play: () => {
-        if (stepIndex >= steps.length - 1) {
-          setStepIndex(0);
-        }
-
-        setPlaying(true);
-      },
-
-      pause: () => {
-        setPlaying(false);
-      },
-
-      next: () => {
-        setPlaying(false);
-
-        setStepIndex((index) =>
-          Math.min(index + 1, Math.max(steps.length - 1, 0)),
-        );
-      },
-
-      prev: () => {
-        setPlaying(false);
-
-        setStepIndex((index) => Math.max(index - 1, 0));
-      },
-
-      restart: () => {
-        setStepIndex(0);
-        setPlaying(true);
-      },
-
-      goTo: (index) => {
-        setPlaying(false);
-        setStepIndex(index);
-      },
+    snapshot: {
+      rootId: root?.key ?? null,
+      nodes,
     },
+    books,
+  };
+}
 
-    insert,
-    remove,
+export function useRedBlackTree() {
+  const [tree, setTree] = useState(null);
+  const [stats, setStats] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+
+  const [lastOp, setLastOp] = useState("Carregamento inicial");
+
+  // Carrega a árvore e as estatísticas do backend.
+  const loadTree = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const [treeData, statsData] = await Promise.all([
+        getRedBlackTree(),
+        getRedBlackTreeStats(),
+      ]);
+
+      setTree(treeData);
+      setStats(statsData);
+      setFeedback(null);
+
+      return treeData;
+    } catch (error) {
+      setFeedback({
+        kind: "error",
+        text: error.message || "Não foi possível carregar a árvore.",
+      });
+
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Pesquisa um livro pelo ID.
+  const search = useCallback(async (id) => {
+    try {
+      setSearching(true);
+
+      const response = await searchBookInTree(id);
+
+      // Algumas APIs retornam { success, data }.
+      const book = response?.data?.data ?? response?.data ?? response;
+
+      setSelectedBook(book);
+      setLastOp(`Pesquisar livro ${id}`);
+
+      setFeedback({
+        kind: "success",
+        text: `Livro ${id} encontrado na árvore.`,
+      });
+
+      return book;
+    } catch (error) {
+      setSelectedBook(null);
+
+      setFeedback({
+        kind: "error",
+        text: error.message || "Livro não encontrado na árvore.",
+      });
+
+      return false;
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  // Atualiza os dados da árvore.
+  const refresh = useCallback(async () => {
+    return loadTree();
+  }, [loadTree]);
+
+  // Converte a resposta da API para o visualizador.
+  const convertedTree = useMemo(() => {
+    return convertApiTree(tree);
+  }, [tree]);
+
+  // Retorna o livro associado a determinado nó.
+  const bookFor = useCallback(
+    (nodeId) => {
+      return convertedTree.books[nodeId] ?? null;
+    },
+    [convertedTree],
+  );
+
+  // Snapshot utilizado pelo RedBlackTreeVisualizer.
+  const snapshot = convertedTree.snapshot;
+
+  useEffect(() => {
+    loadTree().catch(() => {});
+  }, [loadTree]);
+
+  return {
+    // Dados originais da API.
+    tree,
+    stats,
+
+    // Dados preparados para o visualizador.
+    snapshot,
+    bookFor,
+
+    // Estados.
+    loading,
+    searching,
+    selectedBook,
+    feedback,
+    lastOp,
+
+    // Operações.
     search,
-    loadExample,
-    randomTree,
-    clear,
-    undo,
+    refresh,
+    loadTree,
   };
 }

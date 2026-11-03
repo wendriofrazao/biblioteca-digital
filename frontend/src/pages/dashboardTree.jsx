@@ -18,16 +18,16 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
   const [activeTab, setActiveTab] = useState("catalogo");
   const [isOpenMobile, setIsOpenMobile] = useState(false);
 
-  // Busca o perfil quando os dados do usuário ainda não estão disponíveis.
+  // Carrega o usuário autenticado.
   useEffect(() => {
     if (!usuarioProp && !usuarioAutenticado && !authLoading) {
       void loadUser();
     }
   }, [usuarioProp, usuarioAutenticado, authLoading, loadUser]);
 
+  // Normaliza os dados do usuário.
   const usuarioOriginal = usuarioProp ?? usuarioAutenticado ?? {};
 
-  // Normaliza os campos para aceitar diferentes formatos da API.
   const nomeUsuario =
     usuarioOriginal.name ??
     usuarioOriginal.nome ??
@@ -64,6 +64,15 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
 
   const handleSair = onSair ?? signOut;
 
+  // Snapshot convertido pelo hook.
+  const snapshot = ctl?.snapshot ?? {
+    rootId: null,
+    nodes: {},
+  };
+
+  // Dados completos dos livros associados aos nós.
+  const bookFor = ctl?.bookFor ?? (() => null);
+
   return (
     <div className="biblioteca-layout">
       <LeftSidebar
@@ -84,10 +93,9 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
         ) : (
           <LibraryPage
             ctl={ctl}
-            snapshot={ctl.snapshot}
-            highlight={ctl.highlight}
-            bookFor={ctl.bookFor}
-            onNodeClick={ctl.onNodeClick}
+            snapshot={snapshot}
+            bookFor={bookFor}
+            highlight={null}
           />
         )}
       </main>

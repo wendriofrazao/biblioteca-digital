@@ -11,6 +11,11 @@ const PAD = 48;
  * A profundidade define a posição vertical.
  */
 export function layoutTree(snapshot) {
+  const safeSnapshot = snapshot ?? {
+    rootId: null,
+    nodes: {},
+  };
+
   const pos = {};
   let index = 0;
   let maxDepth = 0;
@@ -18,7 +23,8 @@ export function layoutTree(snapshot) {
   const walk = (id, depth) => {
     if (id == null) return;
 
-    const node = snapshot.nodes?.[id];
+    const node = safeSnapshot.nodes?.[id];
+
     if (!node) return;
 
     walk(node.left, depth + 1);
@@ -34,7 +40,7 @@ export function layoutTree(snapshot) {
     walk(node.right, depth + 1);
   };
 
-  walk(snapshot.rootId, 0);
+  walk(safeSnapshot.rootId, 0);
 
   return {
     pos,
@@ -43,47 +49,121 @@ export function layoutTree(snapshot) {
   };
 }
 
+// Obtém o primeiro campo válido de um livro.
+function getBookField(book, fields, fallback = "") {
+  for (const field of fields) {
+    const value = book?.[field];
+
+    if (value !== undefined && value !== null && value !== "") {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
+// Formata o nome do autor, independentemente do formato retornado pela API.
+function getAuthorName(book) {
+  const author =
+    book?.author ?? book?.autor ?? book?.autores ?? book?.bookAuthor ?? null;
+
+  if (typeof author === "string") return author;
+
+  if (Array.isArray(author)) {
+    return author
+      .map((item) =>
+        typeof item === "string" ? item : (item?.nome ?? item?.name ?? ""),
+      )
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  return author?.nome ?? author?.name ?? "Autor não informado";
+}
+
 export function RedBlackTreeVisualizer({
   snapshot,
-  highlight = {},
+  highlight,
   onNodeClick,
   bookFor,
 }) {
+  // Evita erros quando as propriedades chegam como null.
+  const safeSnapshot = snapshot ?? {
+    rootId: null,
+    nodes: {},
+  };
+
+  const safeHighlight = highlight ?? {};
+
   const { pos, width, height } = useMemo(
-    () => layoutTree(snapshot),
-    [snapshot],
+    () => layoutTree(safeSnapshot),
+    [safeSnapshot],
   );
 
-  const [view, setView] = useState({ k: 1, x: 0, y: 0 });
+  const [view, setView] = useState({
+    k: 1,
+    x: 0,
+    y: 0,
+  });
+
   const [hovered, setHovered] = useState(null);
+
   const drag = useRef(null);
+  const suppressClick = useRef(false);
 
   const vbW = Math.max(width + PAD * 2, 320);
   const vbH = Math.max(height + PAD * 2, 240);
+
   const offX = (vbW - width) / 2;
 
-  const path = new Set(highlight.path || []);
-  const rotated = new Set(highlight.rotated || []);
-  const recolored = new Set(highlight.recolored || []);
-  const related = new Set(highlight.related || []);
+  // Destaques da árvore.
+  const path = new Set(safeHighlight.path ?? []);
+  const rotated = new Set(safeHighlight.rotated ?? []);
+  const recolored = new Set(safeHighlight.recolored ?? []);
+  const related = new Set(safeHighlight.related ?? []);
 
-  const nodes = Object.values(snapshot.nodes || {});
+  const nodes = Object.values(safeSnapshot.nodes ?? {});
   const edges = [];
 
   nodes.forEach((node) => {
     if (node.left != null) {
-      edges.push({ from: node.id, to: node.left });
+      edges.push({
+        from: node.id,
+        to: node.left,
+      });
     }
+
     if (node.right != null) {
-      edges.push({ from: node.id, to: node.right });
+      edges.push({
+        from: node.id,
+        to: node.right,
+      });
     }
   });
 
-  const empty = snapshot.rootId == null;
-  const hoveredNode = hovered != null ? snapshot.nodes?.[hovered] : null;
+  const empty = safeSnapshot.rootId == null;
+
+  const hoveredNode = hovered != null ? safeSnapshot.nodes?.[hovered] : null;
+
   const hoveredBook =
     hoveredNode && bookFor ? bookFor(hoveredNode.value) : null;
+
   const hoveredPos = hoveredNode ? pos[hoveredNode.id] : null;
+
+  // Dados do livro para o tooltip.
+  const bookTitle = getBookField(
+    hoveredBook,
+    ["titulo", "title", "nome"],
+    "Livro sem título",
+  );
+
+  const bookYear = getBookField(
+    hoveredBook,
+    ["ano", "year", "anoPublicacao", "ano_publicacao"],
+    "Ano não informado",
+  );
+
+  const bookAuthor = getAuthorName(hoveredBook);
 
   function handleWheel(event) {
     event.preventDefault();
@@ -129,21 +209,22 @@ export function RedBlackTreeVisualizer({
   }
 
   function handlePointerUp() {
-    // Mantém a informação de arraste até o próximo clique ser processado.
     const moved = drag.current?.moved;
+
     drag.current = null;
+
     if (moved) {
       suppressClick.current = true;
+
       window.setTimeout(() => {
         suppressClick.current = false;
       }, 0);
     }
   }
 
-  const suppressClick = useRef(false);
-
   function handleNodeClick(value) {
     if (suppressClick.current) return;
+
     onNodeClick?.(value);
   }
 
@@ -162,23 +243,50 @@ export function RedBlackTreeVisualizer({
   }
 
   function resetView() {
-    setView({ k: 1, x: 0, y: 0 });
+    setView({
+      k: 1,
+      x: 0,
+      y: 0,
+    });
   }
 
   function getNodeRing(node) {
-    if (highlight.removed === node.id) return "ring-removed";
-    if (highlight.found === node.id) return "ring-found";
-    if (highlight.current === node.id || highlight.newNode === node.id) {
+    if (safeHighlight.removed === node.id) {
+      return "ring-removed";
+    }
+
+    if (safeHighlight.found === node.id) {
+      return "ring-found";
+    }
+
+    if (
+      safeHighlight.current === node.id ||
+      safeHighlight.newNode === node.id
+    ) {
       return "ring-current";
     }
-    if (rotated.has(node.id)) return "ring-rotated";
-    if (recolored.has(node.id)) return "ring-recolor";
-    if (related.has(node.id)) return "ring-related";
-    if (path.has(node.id)) return "ring-path";
+
+    if (rotated.has(node.id)) {
+      return "ring-rotated";
+    }
+
+    if (recolored.has(node.id)) {
+      return "ring-recolor";
+    }
+
+    if (related.has(node.id)) {
+      return "ring-related";
+    }
+
+    if (path.has(node.id)) {
+      return "ring-path";
+    }
+
     return "";
   }
 
   const tooltipWidth = 240;
+
   const tooltipX = hoveredPos
     ? Math.min(
         Math.max(hoveredPos.x - tooltipWidth / 2, -offX + 4),
@@ -191,7 +299,9 @@ export function RedBlackTreeVisualizer({
       {empty ? (
         <div className="tree-empty">
           <div className="tree-empty-icon" />
+
           <p className="tree-empty-title">A árvore está vazia</p>
+
           <p className="tree-empty-description">
             Insira um valor ou carregue o exemplo.
           </p>
@@ -220,6 +330,7 @@ export function RedBlackTreeVisualizer({
               aria-label="Árvore Rubro-Negra"
             >
               <g transform={`translate(${offX}, ${PAD})`}>
+                {/* Conexões entre os nós */}
                 {edges.map(({ from, to }) => {
                   const start = pos[from];
                   const end = pos[to];
@@ -229,8 +340,8 @@ export function RedBlackTreeVisualizer({
                   const active =
                     path.has(from) &&
                     (path.has(to) ||
-                      highlight.current === to ||
-                      highlight.found === to);
+                      safeHighlight.current === to ||
+                      safeHighlight.found === to);
 
                   return (
                     <line
@@ -244,8 +355,10 @@ export function RedBlackTreeVisualizer({
                   );
                 })}
 
+                {/* Nós da árvore */}
                 {nodes.map((node) => {
                   const point = pos[node.id];
+
                   if (!point) return null;
 
                   const ring = getNodeRing(node);
@@ -302,6 +415,7 @@ export function RedBlackTreeVisualizer({
                   );
                 })}
 
+                {/* Tooltip com os dados reais do livro */}
                 {hoveredBook && hoveredPos && (
                   <g
                     pointerEvents="none"
@@ -316,14 +430,17 @@ export function RedBlackTreeVisualizer({
                       rx="10"
                       className="book-tooltip-bg"
                     />
+
                     <text x="14" y="24" className="book-tooltip-title">
-                      {hoveredBook.title.length > 30
-                        ? `${hoveredBook.title.slice(0, 29)}…`
-                        : hoveredBook.title}
+                      {String(bookTitle).length > 30
+                        ? `${String(bookTitle).slice(0, 29)}…`
+                        : bookTitle}
                     </text>
+
                     <text x="14" y="44" className="book-tooltip-sub">
-                      {hoveredBook.author} · {hoveredBook.year}
+                      {`${bookAuthor} · ${bookYear}`}
                     </text>
+
                     <text x="14" y="62" className="book-tooltip-hint">
                       Clique para ver os detalhes
                     </text>
@@ -335,6 +452,7 @@ export function RedBlackTreeVisualizer({
         </div>
       )}
 
+      {/* Controles de zoom */}
       <div className="tree-controls">
         <button
           type="button"
@@ -345,6 +463,7 @@ export function RedBlackTreeVisualizer({
         >
           +
         </button>
+
         <button
           type="button"
           className="tree-control-button"
@@ -354,6 +473,7 @@ export function RedBlackTreeVisualizer({
         >
           −
         </button>
+
         <button
           type="button"
           className="tree-control-button tree-fit-button"
@@ -390,7 +510,6 @@ export function TreeLegend() {
           {label}
         </li>
       ))}
-
     </ul>
   );
 }
