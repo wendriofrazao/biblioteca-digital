@@ -255,7 +255,7 @@
 }
 
 .book-wrapper:hover .book-cover-overlay {
-  transform: translateY(-10px) rotate(-1.5deg);
+  transform: translateY(-10px) rotate(-1.5deg) scale(106.25%);
   filter: drop-shadow(4px 8px 6px var(--shadow));
 }
 
@@ -265,5 +265,5 @@
 }
 
 .book-wrapper.selected:hover .book-cover-overlay {
-  transform: translateY(-22px) rotate(-1.5deg);
+  transform: translateY(-22px) rotate(-1.5deg) scale(106.25%);
 }
