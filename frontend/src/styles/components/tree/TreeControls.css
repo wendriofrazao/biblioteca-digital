@@ -1,303 +1,142 @@
-
-/* Painel principal */
-
 .tree-controls-panel {
-  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 0;
-  box-sizing: border-box;
-  min-width: 0;
-
-  background: transparent;
-  color: #334155;
+  gap: 0.75rem;
 }
-
-/* Título */
-
-.tree-controls-title {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.4;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #64748b;
-}
-
-/* Grid das operações */
 
 .tree-controls-operations {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
-  width: 100%;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
 }
-
-/* Campos */
 
 .tree-op-field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  width: 100%;
-  min-width: 0;
-  margin: 0;
+  gap: 0.25rem;
 }
 
 .tree-op-label {
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.3;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: #64748b;
 }
 
-/* Input e botão lado a lado */
-
 .tree-op-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  min-width: 0;
+  display: flex;
+  gap: 0.4rem;
 }
 
-/* Input */
-
 .tree-op-input {
-  display: block;
-  width: 100%;
+  flex: 1;
   min-width: 0;
-  height: 34px;
-  padding: 0 11px;
-
-  border: 1px solid #e5e0d8;
-  border-radius: 9px;
-
-  outline: none;
-  background: #faf9f6;
-  color: #334155;
-
-  font-family: inherit;
-  font-size: 13px;
-  box-sizing: border-box;
-
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-
-  transition: border-color 0.2s, box-shadow 0.2s;
+  height: 36px;
+  padding: 0 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: #fff;
+  color: #0f172a;
 }
 
 .tree-op-input:focus {
-  border-color: #0c5360;
-  box-shadow: 0 0 0 2px rgba(12, 83, 96, 0.1);
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.tree-op-input::placeholder {
-  color: #8290a0;
+.tree-op-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 36px;
+  padding: 0 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: #0f172a;
+  color: #fff;
 }
 
-/* Botões das operações */
+.tree-op-button svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
 
-.tree-op-button,
+.tree-op-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tree-op-button-secondary {
+  background: #1d4ed8;
+}
+
+.tree-op-button-destructive {
+  background: #b91c1c;
+}
+
+.tree-utility-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
 .tree-utility-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-
-  border: 1px solid transparent;
-  border-radius: 9px;
-
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-
-  cursor: pointer;
-  box-sizing: border-box;
-
-  transition: background 0.2s, border-color 0.2s,
-    transform 0.2s, opacity 0.2s;
-}
-
-.tree-op-button {
-  width: 100%;
-  min-width: 0;
+  gap: 0.35rem;
   height: 34px;
-  padding: 0 8px;
-  white-space: nowrap;
-}
-
-.tree-op-button svg,
-.tree-utility-button svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Inserir */
-
-.tree-op-button-default {
-  background: #07505e;
-  color: #ffffff;
-}
-
-.tree-op-button-default:hover:not(:disabled) {
-  background: #063e49;
-}
-
-/* Pesquisar */
-
-.tree-op-button-secondary {
-  background: #f3f0e7;
-  border-color: #eee9dc;
-  color: #07505e;
-}
-
-.tree-op-button-secondary:hover:not(:disabled) {
-  background: #eae5d8;
-}
-
-/* Remover */
-
-.tree-op-button-destructive {
-  background: #ce3438;
-  color: #ffffff;
-}
-
-.tree-op-button-destructive:hover:not(:disabled) {
-  background: #b8272c;
-}
-
-/* Grid das ações auxiliares */
-
-.tree-utility-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
-
-  width: 100%;
-  min-width: 0;
-}
-
-/* Botões auxiliares */
-
-.tree-utility-button {
-  width: 100%;
-  min-width: 0;
-  min-height: 31px;
-  padding: 5px 7px;
-
-  background: #faf9f6;
-  border-color: #e5e0d8;
+  padding: 0 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: #334155;
+  cursor: pointer;
+}
 
-  white-space: nowrap;
-  font-size: 11px;
-
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+.tree-utility-button svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  flex-shrink: 0;
 }
 
 .tree-utility-button:hover:not(:disabled) {
-  background: #f0eee8;
-  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
-.tree-utility-button:active:not(:disabled),
-.tree-op-button:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-/* Limpar árvore */
-
-.tree-utility-button:nth-child(3) {
-  color: #334155;
-}
-
-/* Desabilitados */
-
-.tree-op-button:disabled,
 .tree-utility-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* Feedback */
-
 .tree-feedback {
   margin: 0;
-  padding: 10px 12px;
-
-  border: 1px solid transparent;
+  padding: 0.5rem 0.65rem;
   border-radius: 8px;
-
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 0.8rem;
 }
 
 .tree-feedback-success {
-  color: #166534;
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
 }
 
 .tree-feedback-error {
-  color: #991b1b;
   background: #fef2f2;
-  border-color: #fecaca;
-}
-
-.tree-feedback-warning {
-  color: #92400e;
-  background: #fffbeb;
-  border-color: #fde68a;
-}
-
-.tree-feedback-info {
-  color: #1e40af;
-  background: #eff6ff;
-  border-color: #bfdbfe;
-}
-
-/* Telas pequenas */
-
-@media (max-width: 320px) {
-  .tree-op-row {
-    grid-template-columns: minmax(0, 1fr) 110px;
-    gap: 6px;
-  }
-
-  .tree-op-button {
-    font-size: 11px;
-  }
-
-  .tree-utility-button {
-    font-size: 10px;
-    gap: 4px;
-    padding: 5px 4px;
-  }
-
-  .tree-utility-button svg {
-    width: 13px;
-    height: 13px;
-  }
-}
-
-/* Acessibilidade */
-
-@media (prefers-reduced-motion: reduce) {
-  .tree-op-input,
-  .tree-op-button,
-  .tree-utility-button {
-    transition: none;
-  }
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }

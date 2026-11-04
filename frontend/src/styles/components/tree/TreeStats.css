@@ -1,211 +1,175 @@
 .tree-stats-container {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  width: 100%;
-  color: var(--tree-stats-text, #1f2937);
+  gap: 0.75rem;
 }
 
 .tree-stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
 }
 
 .tree-stat {
-  min-width: 0;
-  padding: 10px 4px;
-  border-bottom: 1px solid var(--tree-stats-border, #e5e7eb);
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  text-align: center;
 }
 
 .tree-stat-label {
-  font-size: 10px;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--tree-stats-muted, #6b7280);
+  letter-spacing: 0.03em;
+  color: #64748b;
 }
 
 .tree-stat-value {
-  margin-top: 3px;
-  font-family: monospace;
-  font-size: 19px;
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--tree-stats-text, #1f2937);
-  overflow-wrap: anywhere;
+  color: #0f172a;
+  margin-top: 0.1rem;
 }
 
 .tree-last-operation {
-  font-size: 12px;
-  color: var(--tree-stats-muted, #6b7280);
-}
-
-.tree-last-operation strong {
-  color: var(--tree-stats-text, #1f2937);
-  font-weight: 600;
+  font-size: 0.8rem;
+  color: #475569;
 }
 
 .tree-validity {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  font-size: 13px;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.8rem;
 }
 
 .tree-validity-ok {
-  color: #166534;
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
 }
 
 .tree-validity-bad {
-  color: #991b1b;
   background: #fef2f2;
   border-color: #fecaca;
 }
 
 .tree-status-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   stroke: currentColor;
   stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
-.tree-validity-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+.tree-validity-ok .tree-status-icon {
+  color: #059669;
+}
+
+.tree-validity-bad .tree-status-icon {
+  color: #dc2626;
 }
 
 .tree-validity-title {
   font-weight: 600;
-  line-height: 1.4;
+  color: #0f172a;
 }
 
 .tree-validity-error {
-  font-size: 12px;
-  line-height: 1.4;
+  margin-top: 0.2rem;
+  color: #b91c1c;
+  font-size: 0.75rem;
 }
 
 .tree-stats-description {
   margin: 0;
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--tree-stats-muted, #6b7280);
-}
-
-.tree-traversal {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #64748b;
 }
 
 .tree-traversal-buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
 }
 
 .tree-traversal-buttons button {
-  padding: 7px 10px;
-  border: 1px solid transparent;
+  flex: 1;
+  height: 30px;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  background: transparent;
-  color: var(--tree-stats-muted, #6b7280);
-  font-size: 12px;
-  font-weight: 500;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.tree-traversal-buttons button:hover {
-  background: var(--tree-stats-hover, #f1f5f9);
-  color: var(--tree-stats-text, #1f2937);
 }
 
 .tree-traversal-buttons button.active {
-  background: var(--tree-stats-active-bg, #e2e8f0);
-  color: var(--tree-stats-text, #1f2937);
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
 }
 
 .tree-traversal-sequence {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  min-height: 36px;
-  padding: 8px;
-  border: 1px solid var(--tree-stats-border, #e5e7eb);
-  border-radius: 8px;
-  background: var(--tree-stats-sequence-bg, #f8fafc);
-  font-family: monospace;
-  font-size: 12px;
+  gap: 0.25rem;
+  min-height: 28px;
 }
 
 .tree-sequence-value {
-  padding: 3px 6px;
-  border-radius: 4px;
-  background: var(--tree-stats-value-bg, #e5e7eb);
-  color: var(--tree-stats-text, #374151);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.35rem;
+  border-radius: 6px;
+  background: #e2e8f0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .tree-sequence-empty {
-  color: var(--tree-stats-muted, #9ca3af);
-}
-
-.tree-complexity {
-  padding-top: 12px;
-  border-top: 1px solid var(--tree-stats-border, #e5e7eb);
+  font-size: 0.8rem;
+  color: #94a3b8;
 }
 
 .tree-complexity-heading {
-  margin-bottom: 10px;
-  color: var(--tree-stats-muted, #6b7280);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 650;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 0.35rem;
 }
 
 .tree-complexity-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  text-align: center;
-  font-size: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
 }
 
 .tree-complexity-item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  color: var(--tree-stats-muted, #6b7280);
+  text-align: center;
+  padding: 0.4rem;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-size: 0.72rem;
+  color: #475569;
 }
 
 .tree-complexity-item strong {
-  color: var(--tree-stats-primary, #2563eb);
-  font-family: monospace;
-  font-size: 13px;
-}
-
-.tree-complexity .tree-stats-description {
-  margin-top: 10px;
-}
-
-@media (max-width: 420px) {
-  .tree-stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .tree-traversal-buttons button {
-    padding: 7px 8px;
-    font-size: 11px;
-  }
+  display: block;
+  margin-top: 0.15rem;
+  color: #0f172a;
+  font-size: 0.85rem;
 }

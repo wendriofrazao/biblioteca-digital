@@ -3,6 +3,29 @@ import { createRedBlackTree } from "../lib/redBlackTreeCore.jsx";
 
 const EXAMPLE_VALUES = [10, 20, 30, 15, 25, 5, 1, 12, 18, 28];
 
+/** Duração base (ms) por tipo de passo — operações importantes ficam mais tempo na tela. */
+const STEP_DURATION = {
+  start: 550,
+  compare: 480,
+  "insert-node": 900,
+  violation: 700,
+  recolor: 950,
+  "rotate-left": 1100,
+  "rotate-right": 1100,
+  found: 1000,
+  "not-found": 800,
+  duplicate: 800,
+  "remove-node": 950,
+  successor: 900,
+  "fix-delete": 800,
+  done: 650,
+};
+
+function stepDelay(kind, speed) {
+  const base = STEP_DURATION[kind] ?? 700;
+  return Math.max(180, base / Math.max(0.25, speed));
+}
+
 function randomValues(count = 12) {
   const set = new Set();
   while (set.size < count) {
@@ -32,8 +55,20 @@ export function useDemoRedBlackTree() {
   const [history, setHistory] = useState([]);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
+  /** Incrementa a cada mudança de passo para forçar reanimação CSS. */
+  const [animKey, setAnimKey] = useState(0);
 
   const playTimer = useRef(null);
+  const stepsRef = useRef([]);
+  const speedRef = useRef(1);
+
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
+
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
 
   const applySnapshot = useCallback(
     (s) => {
@@ -52,17 +87,16 @@ export function useDemoRedBlackTree() {
   }, [tree]);
 
   const finishOperation = useCallback(
-    (opResult, opName) => {
+    (opResult, opName, { autoPlay = true } = {}) => {
       const opSteps = opResult.steps ?? [];
       setSteps(opSteps);
-      setStepIndex(Math.max(0, opSteps.length - 1));
+      stepsRef.current = opSteps;
       setResult({
         rotations: opResult.rotations ?? 0,
         comparisons: opResult.comparisons ?? 0,
         recolorings: opResult.recolorings ?? 0,
       });
       setLastOp(opName);
-      applySnapshot(opSteps[opSteps.length - 1]?.snapshot);
       setFeedback({
         kind: opResult.success === false ? "error" : "success",
         text:
@@ -74,8 +108,26 @@ export function useDemoRedBlackTree() {
                 : "Operação falhou."
             : `${opName} concluída.`,
       });
+
+      if (opSteps.length > 0) {
+        setStepIndex(0);
+        setAnimKey((k) => k + 1);
+        applySnapshot(opSteps[0].snapshot);
+        if (autoPlay && opSteps.length > 1) {
+          setPlaying(true);
+        } else {
+          setPlaying(false);
+          if (opSteps.length === 1) {
+            applySnapshot(opSteps[0].snapshot);
+          }
+        }
+      } else {
+        setStepIndex(0);
+        setPlaying(false);
+        applySnapshot(tree.serialize());
+      }
     },
-    [applySnapshot],
+    [applySnapshot, tree],
   );
 
   const insert = useCallback(
@@ -113,7 +165,7 @@ export function useDemoRedBlackTree() {
   const clear = useCallback(() => {
     pushHistory();
     const res = tree.clear();
-    finishOperation(res, "Limpar árvore");
+    finishOperation(res, "Limpar árvore", { autoPlay: false });
     setFeedback({ kind: "success", text: "Árvore limpa." });
   }, [tree, pushHistory, finishOperation]);
 
@@ -121,24 +173,27 @@ export function useDemoRedBlackTree() {
     pushHistory();
     tree.clear();
     const res = tree.loadValues(EXAMPLE_VALUES);
-    finishOperation(res, "Inserir exemplo");
+    finishOperation(res, "Inserir exemplo", { autoPlay: false });
+    applySnapshot(tree.serialize());
+    setStats(tree.getStats());
     setFeedback({ kind: "success", text: "Exemplo carregado." });
-  }, [tree, pushHistory, finishOperation]);
+  }, [tree, pushHistory, finishOperation, applySnapshot]);
 
   const randomTree = useCallback(() => {
     pushHistory();
     tree.clear();
     const values = randomValues(12);
     const res = tree.loadValues(values);
-    finishOperation(res, "Árvore aleatória");
+    finishOperation(res, "Árvore aleatória", { autoPlay: false });
+    applySnapshot(tree.serialize());
+    setStats(tree.getStats());
     setFeedback({ kind: "success", text: "Árvore aleatória gerada." });
-  }, [tree, pushHistory, finishOperation]);
+  }, [tree, pushHistory, finishOperation, applySnapshot]);
 
   const undo = useCallback(() => {
     setHistory((h) => {
       if (h.length === 0) return h;
       const prev = h[h.length - 1];
-      // Rebuild tree from previous snapshot by re-inserting values
       tree.clear();
       const values = [];
       const walk = (id) => {
@@ -150,13 +205,13 @@ export function useDemoRedBlackTree() {
         walk(n.right);
       };
       walk(prev.rootId);
-      // insert in order that roughly preserves structure (in-order is sorted, so rebuild via sequential insert)
       values.sort((a, b) => a - b);
-      // Better: just load the values; structure may differ slightly but is valid
       tree.loadValues(values);
       applySnapshot(tree.serialize());
       setSteps([]);
+      stepsRef.current = [];
       setStepIndex(0);
+      setPlaying(false);
       setLastOp("Desfazer");
       setFeedback({ kind: "success", text: "Última operação desfeita." });
       setStats(tree.getStats());
@@ -166,19 +221,17 @@ export function useDemoRedBlackTree() {
 
   const canUndo = history.length > 0;
 
-  // Playback
-  const goTo = useCallback(
-    (index) => {
-      if (!steps.length) return;
-      const i = Math.max(0, Math.min(index, steps.length - 1));
-      setStepIndex(i);
-      const step = steps[i];
-      if (step?.snapshot) {
-        setSnapshot(step.snapshot);
-      }
-    },
-    [steps],
-  );
+  const goTo = useCallback((index) => {
+    const list = stepsRef.current;
+    if (!list.length) return;
+    const i = Math.max(0, Math.min(index, list.length - 1));
+    setStepIndex(i);
+    setAnimKey((k) => k + 1);
+    const step = list[i];
+    if (step?.snapshot) {
+      setSnapshot(step.snapshot);
+    }
+  }, []);
 
   const next = useCallback(() => {
     goTo(stepIndex + 1);
@@ -194,9 +247,19 @@ export function useDemoRedBlackTree() {
   }, [goTo]);
 
   const play = useCallback(() => {
-    if (!steps.length) return;
+    if (!stepsRef.current.length) return;
+    setStepIndex((i) => {
+      const list = stepsRef.current;
+      if (i >= list.length - 1) {
+        const first = list[0];
+        if (first?.snapshot) setSnapshot(first.snapshot);
+        setAnimKey((k) => k + 1);
+        return 0;
+      }
+      return i;
+    });
     setPlaying(true);
-  }, [steps]);
+  }, []);
 
   const pause = useCallback(() => {
     setPlaying(false);
@@ -210,7 +273,9 @@ export function useDemoRedBlackTree() {
       return undefined;
     }
 
-    const delay = 900 / Math.max(0.25, speed);
+    const kind = steps[stepIndex]?.kind;
+    const delay = stepDelay(kind, speed);
+
     playTimer.current = window.setTimeout(() => {
       goTo(stepIndex + 1);
     }, delay);
@@ -223,7 +288,7 @@ export function useDemoRedBlackTree() {
   const step = steps[stepIndex] ?? null;
 
   const highlight = useMemo(() => {
-    if (!step) return {};
+    if (!step) return { animKey };
     return {
       path: step.path ?? [],
       rotated: step.rotated ?? [],
@@ -233,8 +298,10 @@ export function useDemoRedBlackTree() {
       newNode: step.newNode ?? null,
       found: step.found ?? null,
       removed: step.removed ?? null,
+      kind: step.kind ?? null,
+      animKey,
     };
-  }, [step]);
+  }, [step, animKey]);
 
   const bookFor = useCallback(
     (nodeId) => {

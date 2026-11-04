@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import "../../styles/components/tree/TreeAnimationControls.css";
 
 export const KIND_LABEL = {
@@ -51,18 +52,42 @@ export function TreeAnimationControls({ ctl }) {
 
   const steps = Array.isArray(ctl.steps) ? ctl.steps : [];
   const stepIndex = Number.isInteger(ctl.stepIndex) ? ctl.stepIndex : 0;
-
   const pb = ctl.playback ?? {};
-
   const hasSteps = steps.length > 0;
   const speedValue = Number(pb.speed ?? 1);
-
   const safeSpeed = Number.isFinite(speedValue)
     ? Math.min(4, Math.max(0.25, speedValue))
     : 1;
 
+  const listRef = useRef(null);
+  const activeRef = useRef(null);
+
+  useEffect(() => {
+    if (activeRef.current && listRef.current) {
+      activeRef.current.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }
+  }, [stepIndex]);
+
+  const current = hasSteps ? steps[stepIndex] : null;
+  const currentKind = current?.kind ?? "unknown";
+  const currentLabel = KIND_LABEL[currentKind] || currentKind;
+
   return (
     <div className="tree-animation-controls">
+      {current && (
+        <div className={`tree-step-banner tree-step-banner-${currentKind}`}>
+          <span className={`tree-step-tag tree-step-${currentKind}`}>
+            {currentLabel}
+          </span>
+          <p className="tree-step-banner-message">
+            {current.message ?? "Etapa da operação"}
+          </p>
+        </div>
+      )}
+
       <div className="tree-playback-actions">
         {pb.playing ? (
           <button
@@ -149,27 +174,33 @@ export function TreeAnimationControls({ ctl }) {
       </div>
 
       {hasSteps ? (
-        <ol className="tree-step-list">
+        <ol className="tree-step-list" ref={listRef}>
           {steps.map((step, index) => {
             const active = index === stepIndex;
             const kind = step?.kind ?? "unknown";
             const label = KIND_LABEL[kind] || kind;
+            const done = index < stepIndex;
 
             return (
               <li key={`${kind}-${index}`}>
                 <button
                   type="button"
+                  ref={active ? activeRef : undefined}
                   onClick={() => pb.goTo?.(index)}
                   disabled={!pb.goTo}
-                  className={`tree-step-item ${
-                    active ? "tree-step-item-active" : ""
-                  }`}
+                  className={[
+                    "tree-step-item",
+                    active ? "tree-step-item-active" : "",
+                    done ? "tree-step-item-done" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   aria-current={active ? "step" : undefined}
                 >
+                  <span className="tree-step-index">{index + 1}</span>
                   <span className={`tree-step-tag tree-step-${kind}`}>
                     {label}
                   </span>
-
                   <span className="tree-step-message">
                     {step?.message ?? "Etapa da operação"}
                   </span>

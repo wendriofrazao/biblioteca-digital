@@ -1,335 +1,282 @@
-/* Estrutura principal */
 .tree-animation-controls {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-  color: var(--tree-controls-text, #27272a);
+  gap: 0.65rem;
 }
 
-/* Botões de reprodução e navegação */
+/* Banner do passo atual */
+.tree-step-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  animation: banner-in 0.35s ease;
+}
+
+.tree-step-banner-message {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.tree-step-banner-rotate-left,
+.tree-step-banner-rotate-right {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.tree-step-banner-recolor {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.tree-step-banner-found,
+.tree-step-banner-insert-node {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.tree-step-banner-remove-node {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.tree-step-banner-compare {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .tree-playback-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.tree-action-button,
-.tree-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  height: 34px;
-  border: 1px solid var(--tree-controls-border, #d4d4d8);
-  border-radius: 7px;
-  background: var(--tree-controls-button-bg, #ffffff);
-  color: var(--tree-controls-text, #27272a);
-  cursor: pointer;
-  transition:
-    background 150ms ease,
-    border-color 150ms ease,
-    opacity 150ms ease;
+  gap: 0.35rem;
 }
 
 .tree-action-button {
-  padding: 0 11px;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 34px;
+  padding: 0 0.7rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .tree-primary-button {
-  border-color: var(--tree-primary, #27272a);
-  background: var(--tree-primary, #27272a);
-  color: var(--tree-primary-foreground, #ffffff);
+  background: #0f172a;
+  color: #fff;
 }
 
-.tree-primary-button:hover:not(:disabled) {
-  background: var(--tree-primary-hover, #404040);
-}
-
-.tree-icon-button {
-  width: 34px;
-  flex: 0 0 34px;
-  padding: 0;
-}
-
-.tree-icon-button:hover:not(:disabled) {
-  background: var(--tree-controls-hover, #f4f4f5);
-  border-color: var(--tree-controls-hover-border, #a1a1aa);
+.tree-primary-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .tree-action-button svg,
 .tree-icon-button svg {
   width: 16px;
   height: 16px;
-  flex: 0 0 16px;
-  fill: none;
   stroke: currentColor;
   stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.tree-primary-button svg {
   fill: none;
 }
 
-.tree-action-button:disabled,
+.tree-icon-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.tree-icon-button:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
 .tree-icon-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.tree-action-button:focus-visible,
-.tree-icon-button:focus-visible,
-.tree-step-item:focus-visible {
-  outline: 2px solid var(--tree-controls-focus, #3b82f6);
-  outline-offset: 2px;
-}
-
 .tree-step-counter {
   margin-left: auto;
-  color: var(--tree-controls-muted, #71717a);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Controle de velocidade */
 .tree-speed-control {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 0;
+  gap: 0.5rem;
 }
 
 .tree-speed-label {
-  color: var(--tree-controls-muted, #71717a);
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
   white-space: nowrap;
 }
 
 .tree-speed-slider {
-  width: 100%;
-  min-width: 40px;
-  height: 5px;
   flex: 1;
-  margin: 0;
-  border-radius: 999px;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  background: linear-gradient(
-    to right,
-    var(--tree-slider-active, #27272a) 0%,
-    var(--tree-slider-active, #27272a) var(--slider-progress),
-    var(--tree-slider-track, #e4e4e7) var(--slider-progress),
-    var(--tree-slider-track, #e4e4e7) 100%
-  );
-  cursor: pointer;
-}
-
-.tree-speed-slider::-webkit-slider-thumb {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--tree-slider-thumb-border, #27272a);
-  border-radius: 50%;
-  appearance: none;
-  -webkit-appearance: none;
-  background: var(--tree-slider-thumb, #ffffff);
-  cursor: grab;
-}
-
-.tree-speed-slider::-moz-range-thumb {
-  width: 11px;
-  height: 11px;
-  border: 2px solid var(--tree-slider-thumb-border, #27272a);
-  border-radius: 50%;
-  background: var(--tree-slider-thumb, #ffffff);
-  cursor: grab;
-}
-
-.tree-speed-slider:focus-visible {
-  outline: 2px solid var(--tree-controls-focus, #3b82f6);
-  outline-offset: 5px;
+  accent-color: #0f172a;
 }
 
 .tree-speed-value {
-  width: 34px;
-  color: var(--tree-controls-text, #27272a);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  min-width: 2.2rem;
   text-align: right;
-  white-space: nowrap;
 }
 
-/* Lista de etapas */
 .tree-step-list {
-  display: flex;
-  max-height: 224px;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0 4px 0 0;
   list-style: none;
-  scrollbar-width: thin;
-  scrollbar-color: var(--tree-scrollbar, #c4c4c8) transparent;
-}
-
-.tree-step-list::-webkit-scrollbar {
-  width: 5px;
-}
-
-.tree-step-list::-webkit-scrollbar-thumb {
-  border-radius: 99px;
-  background: var(--tree-scrollbar, #c4c4c8);
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  scroll-behavior: smooth;
 }
 
 .tree-step-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.4rem auto 1fr;
+  align-items: start;
+  gap: 0.35rem 0.45rem;
   width: 100%;
-  min-height: 34px;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 7px 8px;
-  border: 1px solid transparent;
-  border-radius: 7px;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
   background: transparent;
-  color: var(--tree-controls-text, #27272a);
   text-align: left;
   cursor: pointer;
+  font-size: 0.78rem;
+  color: #475569;
   transition:
-    background 140ms ease,
-    border-color 140ms ease;
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
-.tree-step-item:hover {
-  background: var(--tree-step-hover, #f4f4f5);
+.tree-step-item:last-child {
+  border-bottom: none;
+}
+
+.tree-step-item:hover:not(:disabled) {
+  background: #f1f5f9;
 }
 
 .tree-step-item-active {
-  border-color: var(--tree-step-active-border, #d4d4d8);
-  background: var(--tree-step-active-bg, #f4f4f5);
+  background: #eff6ff !important;
+  color: #1e3a8a;
+  box-shadow: inset 3px 0 0 #3b82f6;
 }
 
-.tree-step-item-active:hover {
-  background: var(--tree-step-active-bg, #f4f4f5);
+.tree-step-item-done {
+  opacity: 0.7;
+}
+
+.tree-step-index {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.15rem;
+}
+
+.tree-step-item-active .tree-step-index {
+  color: #3b82f6;
 }
 
 .tree-step-tag {
-  display: inline-flex;
-  min-height: 19px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 6px;
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
   border-radius: 4px;
-  background: var(--step-neutral-bg, #e4e4e7);
-  color: var(--step-neutral-text, #52525b);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #e2e8f0;
+  color: #334155;
   white-space: nowrap;
-}
-
-.tree-step-message {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--tree-controls-text, #3f3f46);
-  font-size: 12px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-/* Cores das categorias de etapas */
-.tree-step-start,
-.tree-step-done {
-  background: #e4e4e7;
-  color: #52525b;
-}
-
-.tree-step-compare,
-.tree-step-successor {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.tree-step-insert-node,
-.tree-step-found {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.tree-step-violation,
-.tree-step-fix-delete {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.tree-step-recolor {
-  background: #fae8ff;
-  color: #a21caf;
 }
 
 .tree-step-rotate-left,
 .tree-step-rotate-right {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #f3e8ff;
+  color: #6b21a8;
 }
 
-.tree-step-not-found,
-.tree-step-removed-node {
+.tree-step-recolor {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tree-step-found {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.tree-step-insert-node {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.tree-step-remove-node {
   background: #fee2e2;
-  color: #b91c1c;
+  color: #991b1b;
 }
 
-.tree-step-duplicate {
-  background: #ffedd5;
-  color: #c2410c;
+.tree-step-compare {
+  background: #e0f2fe;
+  color: #075985;
 }
 
-/* Estado sem etapas */
+.tree-step-message {
+  line-height: 1.35;
+  grid-column: 1 / -1;
+}
+
+.tree-step-item-active .tree-step-message {
+  font-weight: 500;
+}
+
 .tree-no-steps {
   margin: 0;
-  color: var(--tree-controls-muted, #71717a);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* Ajustes para telas pequenas */
-@media (max-width: 420px) {
-  .tree-playback-actions {
-    gap: 4px;
-  }
-
-  .tree-action-button {
-    gap: 5px;
-    padding: 0 8px;
-    font-size: 12px;
-  }
-
-  .tree-icon-button {
-    width: 31px;
-    height: 32px;
-    flex-basis: 31px;
-  }
-
-  .tree-step-item {
-    gap: 6px;
-    padding-inline: 5px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tree-action-button,
-  .tree-icon-button,
-  .tree-step-item {
-    transition: none;
-  }
+  font-size: 0.8rem;
+  color: #94a3b8;
+  padding: 0.5rem 0;
 }
