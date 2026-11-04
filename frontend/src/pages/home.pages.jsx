@@ -4,7 +4,7 @@ import { Hero } from "../components/Hero.jsx";
 import { BookShelf } from "../components/BookShelf.jsx";
 import { QuoteCard } from "../components/QuoteCard.jsx";
 import { ActionCards } from "../components/ActionCards.jsx";
-import { livros } from "../components/livros.jsx";
+import { livros } from "../data/livros.jsx";
 
 export function Home() {
   const [indice, setIndice] = useState(0);
