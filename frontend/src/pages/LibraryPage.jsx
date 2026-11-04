@@ -1,4 +1,3 @@
-
 import "../styles/components/LibraryPage.css";
 
 import {
@@ -10,161 +9,137 @@ import { TreeControls } from "../components/tree/TreeControls.jsx";
 import { TreeAnimationControls } from "../components/tree/TreeAnimationControls.jsx";
 import { TreeStats } from "../components/tree/TreeStats.jsx";
 
-function BookIcon() {
+function DatabaseIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M12 7v14" />
-      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+      <path d="M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6" />
     </svg>
   );
 }
 
-function BranchIcon() {
+function FlaskIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M15 6a9 9 0 0 0-9 9V3" />
-      <circle cx="18" cy="6" r="3" />
-      <circle cx="6" cy="18" r="3" />
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 3h6M10 3v6.5L4.5 18a2 2 0 0 0 1.7 3h12a2 2 0 0 0 1.7-3L14 9.5V3" />
+      <path d="M8.5 14h7" />
     </svg>
   );
 }
 
-function LayersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
-      <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a1 1 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
-      <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a1 1 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
-    </svg>
-  );
-}
-
-function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  );
-}
-
-function SummaryItem({ icon, value, label }) {
-  return (
-    <div className="library-summary-item">
-      <div className="library-summary-icon">{icon}</div>
-
-      <p className="library-summary-value">
-        {value ?? 0}
-      </p>
-
-      <span className="library-summary-label">
-        {label}
-      </span>
-    </div>
-  );
-}
-
+/**
+ * Dual Red-Black Tree workspace:
+ * - Catalog (DB): read-only mirror of the real tree stored in the backend
+ * - Demo: fully interactive local simulation with step-by-step animation
+ */
 export function LibraryPage({
-  ctl,
-  snapshot,
-  highlight,
-  bookFor,
-  onNodeClick,
+  catalogCtl,
+  demoCtl,
+  onCatalogNodeClick,
+  onDemoNodeClick,
 }) {
-  if (!ctl) return null;
-
-  const stats = ctl.stats ?? {};
-
-  const validation = stats.validation;
-
-  const validationStatus =
-    validation == null
-      ? "Não verificada"
-      : validation.valid
-        ? "Válida"
-        : "Inválida";
+  if (!catalogCtl && !demoCtl) return null;
 
   return (
-    <main className="library-main">
+    <main className="library-main library-main-dual">
       <header className="library-heading">
-        <p className="library-welcome">
-          Painel do catálogo
-        </p>
+        <p className="library-welcome">Painel do catálogo</p>
 
         <h1>
           Árvore Rubro-Negra<span>.</span>
         </h1>
 
         <p className="library-subtitle">
-          Seu acervo e o índice da árvore, em um só lugar
+          Compare a estrutura real do banco com uma simulação interativa — lado
+          a lado, de forma independente.
         </p>
       </header>
 
-      <section className="library-summary">
-        <SummaryItem
-          icon={<BookIcon />}
-          value={stats.nodeCount}
-          label="Nós no acervo"
-        />
+      <section className="library-dual-grid">
+        {/* ─── Catálogo (banco de dados) ─── */}
+        <article className="library-panel library-panel-catalog">
+          <header className="library-panel-header">
+            <div className="library-panel-badge library-panel-badge-catalog">
+              <DatabaseIcon />
+              <span>Banco de dados</span>
+            </div>
+            <h2>Árvore do catálogo</h2>
+            <p className="library-panel-desc">
+              Estrutura real construída a partir dos livros cadastrados.
+              Atualiza conforme o acervo do sistema.
+            </p>
+          </header>
 
-        <SummaryItem
-          icon={<BranchIcon />}
-          value={stats.height}
-          label="Altura da árvore"
-        />
-
-        <SummaryItem
-          icon={<LayersIcon />}
-          value={stats.blackHeight}
-          label="Altura negra"
-        />
-
-        <SummaryItem
-          icon={<ShieldIcon />}
-          value={validationStatus}
-          label="Estado da árvore"
-        />
-      </section>
-
-      <section className="library-workspace">
-        <div className="library-workspace-main">
-          <div className="library-tree">
+          <div className="library-panel-tree">
             <div className="library-tree-canvas">
               <RedBlackTreeVisualizer
-                snapshot={snapshot}
-                highlight={highlight}
-                onNodeClick={onNodeClick}
-                bookFor={bookFor}
+                snapshot={catalogCtl?.snapshot}
+                highlight={catalogCtl?.highlight}
+                onNodeClick={onCatalogNodeClick}
+                bookFor={catalogCtl?.bookFor}
+                compact
               />
             </div>
           </div>
 
-          <div className="library-workspace-note">
-            <p>Índice do catálogo</p>
+          <div className="library-panel-side">
+            <section className="library-workspace-section">
+              <h3>Estatísticas</h3>
+              <TreeStats ctl={catalogCtl} mode="catalog" />
+            </section>
 
-            <TreeLegend />
+            <section className="library-workspace-section library-legend-section">
+              <h3>Legenda</h3>
+              <TreeLegend />
+            </section>
           </div>
-        </div>
+        </article>
 
-        <aside className="library-workspace-side">
-          <section className="library-workspace-section">
-            <h2>Operações</h2>
+        {/* ─── Demonstração interativa ─── */}
+        <article className="library-panel library-panel-demo">
+          <header className="library-panel-header">
+            <div className="library-panel-badge library-panel-badge-demo">
+              <FlaskIcon />
+              <span>Simulação</span>
+            </div>
+            <h2>Árvore demonstrativa</h2>
+            <p className="library-panel-desc">
+              Simulação local e independente. Insira, pesquise e remova valores
+              para observar rotações, recolorações e o balanceamento em tempo
+              real.
+            </p>
+          </header>
 
-            <TreeControls ctl={ctl} />
-          </section>
+          <div className="library-panel-tree">
+            <div className="library-tree-canvas">
+              <RedBlackTreeVisualizer
+                snapshot={demoCtl?.snapshot}
+                highlight={demoCtl?.highlight}
+                onNodeClick={onDemoNodeClick}
+                bookFor={demoCtl?.bookFor}
+                compact
+              />
+            </div>
+          </div>
 
-          <section className="library-workspace-section">
-            <h2>Animação</h2>
+          <div className="library-panel-side">
+            <section className="library-workspace-section">
+              <h3>Operações</h3>
+              <TreeControls ctl={demoCtl} mode="demo" />
+            </section>
 
-            <TreeAnimationControls ctl={ctl} />
-          </section>
+            <section className="library-workspace-section">
+              <h3>Animação</h3>
+              <TreeAnimationControls ctl={demoCtl} />
+            </section>
 
-          <section className="library-workspace-section">
-            <h2>Estatísticas</h2>
-
-            <TreeStats ctl={ctl} />
-          </section>
-        </aside>
+            <section className="library-workspace-section">
+              <h3>Estatísticas</h3>
+              <TreeStats ctl={demoCtl} mode="demo" />
+            </section>
+          </div>
+        </article>
       </section>
     </main>
   );

@@ -5,7 +5,7 @@ function Stat({ label, value, hint }) {
   return (
     <div className="tree-stat" title={hint}>
       <div className="tree-stat-label">{label}</div>
-      <div className="tree-stat-value">{value ?? 0}</div>
+      <div className="tree-stat-value">{value ?? "—"}</div>
     </div>
   );
 }
@@ -28,7 +28,7 @@ function StatusIcon({ valid }) {
   );
 }
 
-export function TreeStats({ ctl }) {
+export function TreeStats({ ctl, mode = "demo" }) {
   const [order, setOrder] = useState("in");
 
   if (!ctl) return null;
@@ -55,6 +55,8 @@ export function TreeStats({ ctl }) {
     ? (step.comparisons ?? 0)
     : (result.comparisons ?? 0);
 
+  const isCatalog = mode === "catalog";
+
   return (
     <div className="tree-stats-container">
       <div className="tree-stats-grid">
@@ -66,95 +68,106 @@ export function TreeStats({ ctl }) {
           hint="Número de nós no caminho mais longo da raiz até uma folha."
         />
 
-        <Stat
-          label="Altura negra"
-          value={stats.blackHeight}
-          hint="Nós pretos da raiz até uma folha NIL."
-        />
+        {!isCatalog && (
+          <Stat
+            label="Altura negra"
+            value={stats.blackHeight}
+            hint="Nós pretos da raiz até uma folha NIL."
+          />
+        )}
 
-        <Stat label="Rotações" value={rotations} />
+        {!isCatalog && <Stat label="Rotações" value={rotations} />}
 
-        <Stat label="Comparações" value={comparisons} />
+        {!isCatalog && <Stat label="Comparações" value={comparisons} />}
 
-        <Stat label="Recolorações" value={result.recolorings} />
+        {!isCatalog && (
+          <Stat label="Recolorações" value={result.recolorings} />
+        )}
       </div>
 
       <div className="tree-last-operation">
         Última operação: <strong>{ctl.lastOp ?? "Nenhuma"}</strong>
       </div>
 
-      <div
-        className={
-          validation?.valid
-            ? "tree-validity tree-validity-ok"
-            : validation
-              ? "tree-validity tree-validity-bad"
-              : "tree-validity"
-        }
-      >
-        <StatusIcon valid={Boolean(validation?.valid)} />
+      {!isCatalog && (
+        <>
+          <div
+            className={
+              validation?.valid
+                ? "tree-validity tree-validity-ok"
+                : validation
+                  ? "tree-validity tree-validity-bad"
+                  : "tree-validity"
+            }
+          >
+            <StatusIcon valid={Boolean(validation?.valid)} />
 
-        <div className="tree-validity-content">
-          <div className="tree-validity-title">
-            {!validation
-              ? "Validação não disponível"
-              : validation.valid
-                ? "Todas as 5 propriedades Rubro-Negras são satisfeitas"
-                : "Propriedades violadas"}
+            <div className="tree-validity-content">
+              <div className="tree-validity-title">
+                {!validation
+                  ? "Validação não disponível"
+                  : validation.valid
+                    ? "Todas as 5 propriedades Rubro-Negras são satisfeitas"
+                    : "Propriedades violadas"}
+              </div>
+
+              {(validation?.errors ?? []).map((error, index) => (
+                <div className="tree-validity-error" key={`${error}-${index}`}>
+                  {error}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {(validation?.errors ?? []).map((error, index) => (
-            <div className="tree-validity-error" key={`${error}-${index}`}>
-              {error}
+          <p className="tree-stats-description">
+            Altura negra: contam-se os nós pretos da raiz (incluída) até qualquer
+            folha NIL (excluída).
+          </p>
+
+          <div className="tree-traversal">
+            <div className="tree-traversal-buttons">
+              <button
+                type="button"
+                className={order === "in" ? "active" : ""}
+                onClick={() => setOrder("in")}
+              >
+                Em ordem
+              </button>
+
+              <button
+                type="button"
+                className={order === "pre" ? "active" : ""}
+                onClick={() => setOrder("pre")}
+              >
+                Pré-ordem
+              </button>
+
+              <button
+                type="button"
+                className={order === "post" ? "active" : ""}
+                onClick={() => setOrder("post")}
+              >
+                Pós-ordem
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
 
-      <p className="tree-stats-description">
-        Altura negra: contam-se os nós pretos da raiz (incluída) até qualquer
-        folha NIL (excluída).
-      </p>
-
-      <div className="tree-traversal">
-        <div className="tree-traversal-buttons">
-          <button
-            type="button"
-            className={order === "in" ? "active" : ""}
-            onClick={() => setOrder("in")}
-          >
-            Em ordem
-          </button>
-
-          <button
-            type="button"
-            className={order === "pre" ? "active" : ""}
-            onClick={() => setOrder("pre")}
-          >
-            Pré-ordem
-          </button>
-
-          <button
-            type="button"
-            className={order === "post" ? "active" : ""}
-            onClick={() => setOrder("post")}
-          >
-            Pós-ordem
-          </button>
-        </div>
-
-        <div className="tree-traversal-sequence">
-          {seq.length > 0 ? (
-            seq.map((value, index) => (
-              <span className="tree-sequence-value" key={`${value}-${index}`}>
-                {value}
-              </span>
-            ))
-          ) : (
-            <span className="tree-sequence-empty">vazio</span>
-          )}
-        </div>
-      </div>
+            <div className="tree-traversal-sequence">
+              {seq.length > 0 ? (
+                seq.map((value, index) => (
+                  <span
+                    className="tree-sequence-value"
+                    key={`${value}-${index}`}
+                  >
+                    {value}
+                  </span>
+                ))
+              ) : (
+                <span className="tree-sequence-empty">vazio</span>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="tree-complexity">
         <div className="tree-complexity-heading">Complexidade</div>

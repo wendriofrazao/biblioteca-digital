@@ -42,6 +42,14 @@ const ICONS = {
       <path d="M3 13a9 9 0 1 1 2.6 6.4" />
     </svg>
   ),
+  refresh: (
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M3 12a9 9 0 0 1 15.5-6.36L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-15.5 6.36L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  ),
 };
 
 function OpField({
@@ -51,13 +59,14 @@ function OpField({
   icon,
   onRun,
   variant = "default",
+  disabled = false,
 }) {
   const [value, setValue] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
 
-    if (!value.trim() || typeof onRun !== "function") return;
+    if (!value.trim() || typeof onRun !== "function" || disabled) return;
 
     const result = onRun(Number(value));
 
@@ -79,12 +88,13 @@ function OpField({
           placeholder={placeholder}
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          disabled={disabled}
         />
 
         <button
           type="submit"
           className={`tree-op-button tree-op-button-${variant}`}
-          disabled={!value.trim() || typeof onRun !== "function"}
+          disabled={!value.trim() || typeof onRun !== "function" || disabled}
         >
           {ICONS[icon]}
           <span>{button}</span>
@@ -94,80 +104,105 @@ function OpField({
   );
 }
 
-export function TreeControls({ ctl }) {
+/**
+ * @param {object} props
+ * @param {object} props.ctl - controller from useRedBlackTree or useDemoRedBlackTree
+ * @param {"catalog" | "demo"} props.mode - catalog = read-only DB tree; demo = full interactive
+ */
+export function TreeControls({ ctl, mode = "demo" }) {
   if (!ctl) return null;
+
+  const isCatalog = mode === "catalog";
 
   return (
     <section className="tree-controls-panel">
       <div className="tree-controls-operations">
-        <OpField
-          label="Inserir valor"
-          placeholder="ex.: 27"
-          button="Inserir"
-          icon="plus"
-          onRun={ctl.insert}
-        />
+        {!isCatalog && (
+          <OpField
+            label="Inserir valor"
+            placeholder="ex.: 27"
+            button="Inserir"
+            icon="plus"
+            onRun={ctl.insert}
+          />
+        )}
 
         <OpField
-          label="Pesquisar valor"
-          placeholder="ex.: 19"
+          label={isCatalog ? "Pesquisar livro (ID)" : "Pesquisar valor"}
+          placeholder={isCatalog ? "ex.: 42" : "ex.: 19"}
           button="Pesquisar"
           icon="search"
           onRun={ctl.search}
           variant="secondary"
         />
 
-        <OpField
-          label="Remover valor"
-          placeholder="ex.: 38"
-          button="Remover"
-          icon="trash"
-          onRun={ctl.remove}
-          variant="destructive"
-        />
+        {!isCatalog && (
+          <OpField
+            label="Remover valor"
+            placeholder="ex.: 38"
+            button="Remover"
+            icon="trash"
+            onRun={ctl.remove}
+            variant="destructive"
+          />
+        )}
       </div>
 
-      <div className="tree-utility-actions">
-        <button
-          type="button"
-          className="tree-utility-button"
-          onClick={ctl.loadExample}
-          disabled={!ctl.loadExample}
-        >
-          {ICONS.sparkles}
-          <span>Inserir exemplo</span>
-        </button>
+      {isCatalog ? (
+        <div className="tree-utility-actions">
+          <button
+            type="button"
+            className="tree-utility-button"
+            onClick={() => ctl.refresh?.()}
+            disabled={!ctl.refresh || ctl.loading}
+          >
+            {ICONS.refresh}
+            <span>{ctl.loading ? "Carregando…" : "Atualizar do banco"}</span>
+          </button>
+        </div>
+      ) : (
+        <div className="tree-utility-actions">
+          <button
+            type="button"
+            className="tree-utility-button"
+            onClick={ctl.loadExample}
+            disabled={!ctl.loadExample}
+          >
+            {ICONS.sparkles}
+            <span>Inserir exemplo</span>
+          </button>
 
-        <button
-          type="button"
-          className="tree-utility-button"
-          onClick={ctl.randomTree}
-          disabled={!ctl.randomTree}
-        >
-          {ICONS.shuffle}
-          <span>Árvore aleatória</span>
-        </button>
+          <button
+            type="button"
+            className="tree-utility-button"
+            onClick={ctl.randomTree}
+            disabled={!ctl.randomTree}
+          >
+            {ICONS.shuffle}
+            <span>Árvore aleatória</span>
+          </button>
 
-        <button
-          type="button"
-          className="tree-utility-button"
-          onClick={ctl.clear}
-          disabled={!ctl.clear}
-        >
-          {ICONS.eraser}
-          <span>Limpar árvore</span>
-        </button>
+          <button
+            type="button"
+            className="tree-utility-button"
+            onClick={ctl.clear}
+            disabled={!ctl.clear}
+          >
+            {ICONS.eraser}
+            <span>Limpar árvore</span>
+          </button>
 
-        <button
-          type="button"
-          className="tree-utility-button"
-          onClick={ctl.undo}
-          disabled={!ctl.canUndo || !ctl.undo}
-        >
-          {ICONS.undo}
-          <span>Desfazer</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            className="tree-utility-button"
+            onClick={ctl.undo}
+            disabled={!ctl.canUndo || !ctl.undo}
+          >
+            {ICONS.undo}
+            <span>Desfazer</span>
+          </button>
+        </div>
+      )}
 
       {ctl.feedback && (
         <p
@@ -176,6 +211,18 @@ export function TreeControls({ ctl }) {
         >
           {ctl.feedback.text}
         </p>
+      )}
+
+      {isCatalog && ctl.selectedBook && (
+        <div className="tree-selected-book">
+          <strong>Livro selecionado</strong>
+          <p>
+            {ctl.selectedBook.titulo ??
+              ctl.selectedBook.title ??
+              ctl.selectedBook.nome ??
+              `ID ${ctl.selectedBook.id ?? "—"}`}
+          </p>
+        </div>
       )}
     </section>
   );

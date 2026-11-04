@@ -7,7 +7,6 @@ import {
 } from "../service/redBlackTree.service.jsx";
 
 // Extrai a raiz independentemente de a resposta vir diretamente
-// ou dentro de uma resposta do Axios.
 function getTreeRoot(response) {
   let data = response;
 
@@ -159,10 +158,24 @@ export function useRedBlackTree() {
     loadTree().catch(() => {});
   }, [loadTree]);
 
+  // Stats adaptados para o TreeStats (parcial)
+  const adaptedStats = useMemo(() => {
+    if (!stats) return {};
+    return {
+      nodeCount: stats.nodeCount ?? 0,
+      height: stats.height ?? 0,
+      blackHeight: null,
+      validation: null,
+      inOrder: [],
+      preOrder: [],
+      postOrder: [],
+    };
+  }, [stats]);
+
   return {
     // Dados originais da API.
     tree,
-    stats,
+    stats: adaptedStats,
 
     // Dados preparados para o visualizador.
     snapshot,
@@ -175,9 +188,24 @@ export function useRedBlackTree() {
     feedback,
     lastOp,
 
-    // Operações.
+    // Operações (somente leitura / pesquisa).
     search,
     refresh,
     loadTree,
+
+    // Stubs para controles que não se aplicam ao catálogo real
+    insert: undefined,
+    remove: undefined,
+    clear: undefined,
+    loadExample: undefined,
+    randomTree: undefined,
+    undo: undefined,
+    canUndo: false,
+    steps: [],
+    stepIndex: 0,
+    step: null,
+    result: {},
+    highlight: null,
+    playback: {},
   };
 }

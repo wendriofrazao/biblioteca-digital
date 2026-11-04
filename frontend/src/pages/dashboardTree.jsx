@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { LibraryPage } from "./LibraryPage.jsx";
 import { useRedBlackTree } from "../hook/useRedBlackTree.jsx";
+import { useDemoRedBlackTree } from "../hook/useDemoRedBlackTree.jsx";
 import { LeftSidebar } from "../components/Sidebar.jsx";
 import { useAuth } from "../context/auth.context.jsx";
 
@@ -13,19 +14,18 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
     signOut,
   } = useAuth();
 
-  const ctl = useRedBlackTree();
+  const catalogCtl = useRedBlackTree();
+  const demoCtl = useDemoRedBlackTree();
 
   const [activeTab, setActiveTab] = useState("catalogo");
   const [isOpenMobile, setIsOpenMobile] = useState(false);
 
-  // Carrega o usuário autenticado.
   useEffect(() => {
     if (!usuarioProp && !usuarioAutenticado && !authLoading) {
       void loadUser();
     }
   }, [usuarioProp, usuarioAutenticado, authLoading, loadUser]);
 
-  // Normaliza os dados do usuário.
   const usuarioOriginal = usuarioProp ?? usuarioAutenticado ?? {};
 
   const nomeUsuario =
@@ -64,15 +64,6 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
 
   const handleSair = onSair ?? signOut;
 
-  // Snapshot convertido pelo hook.
-  const snapshot = ctl?.snapshot ?? {
-    rootId: null,
-    nodes: {},
-  };
-
-  // Dados completos dos livros associados aos nós.
-  const bookFor = ctl?.bookFor ?? (() => null);
-
   return (
     <div className="biblioteca-layout">
       <LeftSidebar
@@ -92,10 +83,14 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
           </div>
         ) : (
           <LibraryPage
-            ctl={ctl}
-            snapshot={snapshot}
-            bookFor={bookFor}
-            highlight={null}
+            catalogCtl={catalogCtl}
+            demoCtl={demoCtl}
+            onCatalogNodeClick={(id) => {
+              if (id != null) catalogCtl.search?.(id);
+            }}
+            onDemoNodeClick={(value) => {
+              if (value != null) demoCtl.search?.(value);
+            }}
           />
         )}
       </main>

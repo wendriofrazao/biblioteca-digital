@@ -28,14 +28,11 @@ async function treeRequest(endpoint) {
   return data;
 }
 
-// Buscar a árvore construída com os livros do banco.
 export async function getRedBlackTree() {
   const response = await treeRequest("/");
-
   return response.data;
 }
 
-// Pesquisar um livro pelo ID.
 export async function searchBookInTree(id) {
   const bookId = Number(id);
 
@@ -44,11 +41,9 @@ export async function searchBookInTree(id) {
   }
 
   const response = await treeRequest(`/buscar/${bookId}`);
-
   return response.data;
 }
 
-// Buscar estatísticas da árvore.
 export async function getRedBlackTreeStats() {
   const response = await treeRequest("/estatisticas");
 

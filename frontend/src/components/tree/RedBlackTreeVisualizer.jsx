@@ -86,6 +86,7 @@ export function RedBlackTreeVisualizer({
   highlight,
   onNodeClick,
   bookFor,
+  compact = false,
 }) {
   // Evita erros quando as propriedades chegam como null.
   const safeSnapshot = snapshot ?? {
@@ -146,7 +147,9 @@ export function RedBlackTreeVisualizer({
   const hoveredNode = hovered != null ? safeSnapshot.nodes?.[hovered] : null;
 
   const hoveredBook =
-    hoveredNode && bookFor ? bookFor(hoveredNode.value) : null;
+    hoveredNode && bookFor
+      ? bookFor(hoveredNode.value ?? hoveredNode.id)
+      : null;
 
   const hoveredPos = hoveredNode ? pos[hoveredNode.id] : null;
 
@@ -154,7 +157,7 @@ export function RedBlackTreeVisualizer({
   const bookTitle = getBookField(
     hoveredBook,
     ["titulo", "title", "nome"],
-    "Livro sem título",
+    hoveredNode ? `Valor ${hoveredNode.value}` : "Livro sem título",
   );
 
   const bookYear = getBookField(
@@ -295,7 +298,7 @@ export function RedBlackTreeVisualizer({
     : 0;
 
   return (
-    <div className="tree-canvas">
+    <div className={`tree-canvas ${compact ? "tree-canvas-compact" : ""}`}>
       {empty ? (
         <div className="tree-empty">
           <div className="tree-empty-icon" />
@@ -303,7 +306,9 @@ export function RedBlackTreeVisualizer({
           <p className="tree-empty-title">A árvore está vazia</p>
 
           <p className="tree-empty-description">
-            Insira um valor ou carregue o exemplo.
+            {compact
+              ? "Carregue o catálogo ou insira valores na demonstração."
+              : "Insira um valor ou carregue o exemplo."}
           </p>
         </div>
       ) : (
