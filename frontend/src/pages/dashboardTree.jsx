@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { LibraryPage } from "./LibraryPage.jsx";
 import { useRedBlackTree } from "../hook/useRedBlackTree.jsx";
@@ -6,7 +7,18 @@ import { useDemoRedBlackTree } from "../hook/useDemoRedBlackTree.jsx";
 import { LeftSidebar } from "../components/Sidebar.jsx";
 import { useAuth } from "../context/auth.context.jsx";
 
+/** Mapeia a rota atual para o id da aba da sidebar. */
+function tabFromPath(pathname) {
+  if (pathname.includes("/tree")) return "arvore";
+  if (pathname.includes("/loan")) return "emprestimos";
+  if (pathname.includes("/staff")) return "administracao";
+  if (pathname.includes("/dashboard") || pathname === "/") return "painel";
+  return "arvore";
+}
+
 export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
+  const location = useLocation();
+
   const {
     user: usuarioAutenticado,
     loading: authLoading,
@@ -17,8 +29,16 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
   const catalogCtl = useRedBlackTree();
   const demoCtl = useDemoRedBlackTree();
 
-  const [activeTab, setActiveTab] = useState("catalogo");
+  // Estado inicial alinhado com a rota (esta página é /tree → "arvore")
+  const [activeTab, setActiveTab] = useState(() =>
+    tabFromPath(location.pathname),
+  );
   const [isOpenMobile, setIsOpenMobile] = useState(false);
+
+  // Mantém a aba ativa sincronizada com a URL (corrige o "só ativa no 2º clique")
+  useEffect(() => {
+    setActiveTab(tabFromPath(location.pathname));
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!usuarioProp && !usuarioAutenticado && !authLoading) {
