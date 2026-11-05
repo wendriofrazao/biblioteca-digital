@@ -49,7 +49,6 @@ export function layoutTree(snapshot) {
   };
 }
 
-// Obtém o primeiro campo válido de um livro.
 function getBookField(book, fields, fallback = "") {
   for (const field of fields) {
     const value = book?.[field];
@@ -62,7 +61,6 @@ function getBookField(book, fields, fallback = "") {
   return fallback;
 }
 
-// Formata o nome do autor, independentemente do formato retornado pela API.
 function getAuthorName(book) {
   const author =
     book?.author ?? book?.autor ?? book?.autores ?? book?.bookAuthor ?? null;
@@ -88,7 +86,6 @@ export function RedBlackTreeVisualizer({
   bookFor,
   compact = false,
 }) {
-  // Evita erros quando as propriedades chegam como null.
   const safeSnapshot = snapshot ?? {
     rootId: null,
     nodes: {},
@@ -117,7 +114,6 @@ export function RedBlackTreeVisualizer({
 
   const offX = (vbW - width) / 2;
 
-  // Destaques da árvore.
   const path = new Set(safeHighlight.path ?? []);
   const rotated = new Set(safeHighlight.rotated ?? []);
   const recolored = new Set(safeHighlight.recolored ?? []);
@@ -153,7 +149,6 @@ export function RedBlackTreeVisualizer({
 
   const hoveredPos = hoveredNode ? pos[hoveredNode.id] : null;
 
-  // Dados do livro para o tooltip.
   const bookTitle = getBookField(
     hoveredBook,
     ["titulo", "title", "nome"],
@@ -225,9 +220,9 @@ export function RedBlackTreeVisualizer({
     }
   }
 
+  /** Clique no nó: apenas notifica o pai (DashboardTree decide navegar). */
   function handleNodeClick(value) {
     if (suppressClick.current) return;
-
     onNodeClick?.(value);
   }
 
@@ -335,7 +330,6 @@ export function RedBlackTreeVisualizer({
               aria-label="Árvore Rubro-Negra"
             >
               <g transform={`translate(${offX}, ${PAD})`}>
-                {/* Conexões entre os nós */}
                 {edges.map(({ from, to }) => {
                   const start = pos[from];
                   const end = pos[to];
@@ -348,19 +342,26 @@ export function RedBlackTreeVisualizer({
                       safeHighlight.current === to ||
                       safeHighlight.found === to);
 
+                  const rotating = rotated.has(from) || rotated.has(to);
+
                   return (
                     <line
-                      key={`${from}-${to}`}
+                      key={`${from}-${to}-${safeHighlight.animKey ?? 0}`}
                       x1={start.x}
                       y1={start.y}
                       x2={end.x}
                       y2={end.y}
-                      className={`tree-edge ${active ? "edge-active" : ""}`}
+                      className={[
+                        "tree-edge",
+                        active ? "edge-active" : "",
+                        rotating ? "edge-rotate" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     />
                   );
                 })}
 
-                {/* Nós da árvore */}
                 {nodes.map((node) => {
                   const point = pos[node.id];
 
@@ -368,13 +369,33 @@ export function RedBlackTreeVisualizer({
 
                   const ring = getNodeRing(node);
                   const isRecolored = recolored.has(node.id);
+                  const isCurrent =
+                    safeHighlight.current === node.id ||
+                    safeHighlight.newNode === node.id;
+                  const isRotated = rotated.has(node.id);
+                  const isFound = safeHighlight.found === node.id;
+                  const isRemoved = safeHighlight.removed === node.id;
+                  const isOnPath = path.has(node.id);
+
+                  const nodeClass = [
+                    "tree-node",
+                    isCurrent ? "is-current" : "",
+                    isRotated ? "is-rotated" : "",
+                    isRecolored ? "is-recolored" : "",
+                    isFound ? "is-found" : "",
+                    isRemoved ? "is-removed" : "",
+                    isOnPath ? "is-on-path" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
 
                   return (
                     <g
-                      key={node.id}
+                      key={`${node.id}-${safeHighlight.animKey ?? 0}-${node.color}`}
                       transform={`translate(${point.x}, ${point.y})`}
-                      className="tree-node"
-                      onClick={() => handleNodeClick(node.value)}
+                      className={nodeClass}
+                      style={{ cursor: "pointer" }}
+                      onClick={() => handleNodeClick(node.value ?? node.id)}
                       onPointerEnter={() => setHovered(node.id)}
                       onPointerLeave={() =>
                         setHovered((current) =>
@@ -389,7 +410,11 @@ export function RedBlackTreeVisualizer({
                       </title>
 
                       {ring && (
-                        <circle r={R + 7} className={`node-ring ${ring}`} />
+                        <circle r={R + 10} className={`node-halo ${ring}`} />
+                      )}
+
+                      {ring && (
+                        <circle r={R + 6} className={`node-ring ${ring}`} />
                       )}
 
                       <circle
@@ -406,21 +431,10 @@ export function RedBlackTreeVisualizer({
                       >
                         {node.value}
                       </text>
-
-                      {isRecolored && (
-                        <animateTransform
-                          attributeName="transform"
-                          type="scale"
-                          values="1;1.16;1"
-                          dur="0.5s"
-                          repeatCount="1"
-                        />
-                      )}
                     </g>
                   );
                 })}
 
-                {/* Tooltip com os dados reais do livro */}
                 {hoveredBook && hoveredPos && (
                   <g
                     pointerEvents="none"
@@ -457,7 +471,6 @@ export function RedBlackTreeVisualizer({
         </div>
       )}
 
-      {/* Controles de zoom */}
       <div className="tree-controls">
         <button
           type="button"

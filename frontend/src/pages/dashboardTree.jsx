@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { LibraryPage } from "./LibraryPage.jsx";
 import { useRedBlackTree } from "../hook/useRedBlackTree.jsx";
@@ -7,17 +7,22 @@ import { useDemoRedBlackTree } from "../hook/useDemoRedBlackTree.jsx";
 import { LeftSidebar } from "../components/Sidebar.jsx";
 import { useAuth } from "../context/auth.context.jsx";
 
-/** Mapeia a rota atual para o id da aba da sidebar. */
+/** Mesma chave usada em Catalogo.jsx */
+export const OPEN_BOOK_STORAGE_KEY = "biblioteca:openBook";
+
 function tabFromPath(pathname) {
   if (pathname.includes("/tree")) return "arvore";
   if (pathname.includes("/loan")) return "emprestimos";
   if (pathname.includes("/staff")) return "administracao";
-  if (pathname.includes("/dashboard") || pathname === "/") return "painel";
+  if (pathname.includes("/catalogo") || pathname.includes("/dashboard")) {
+    return "painel";
+  }
   return "arvore";
 }
 
 export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const {
     user: usuarioAutenticado,
@@ -29,13 +34,11 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
   const catalogCtl = useRedBlackTree();
   const demoCtl = useDemoRedBlackTree();
 
-  // Estado inicial alinhado com a rota (esta página é /tree → "arvore")
   const [activeTab, setActiveTab] = useState(() =>
     tabFromPath(location.pathname),
   );
   const [isOpenMobile, setIsOpenMobile] = useState(false);
 
-  // Mantém a aba ativa sincronizada com a URL (corrige o "só ativa no 2º clique")
   useEffect(() => {
     setActiveTab(tabFromPath(location.pathname));
   }, [location.pathname]);
@@ -84,6 +87,34 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
 
   const handleSair = onSair ?? signOut;
 
+  /**
+   * Clique no nó da Árvore do catálogo:
+   * salva o livro e navega para /catalogo abrindo o modal.
+   */
+  function handleCatalogNodeClick(nodeId) {
+    if (nodeId == null) return;
+
+    const bookFromTree = catalogCtl.bookFor?.(nodeId) ?? null;
+
+    const payload = {
+      id: bookFromTree?.id ?? bookFromTree?.key ?? nodeId,
+      ...(bookFromTree && typeof bookFromTree === "object" ? bookFromTree : {}),
+    };
+
+    try {
+      sessionStorage.setItem(OPEN_BOOK_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      /* ignore */
+    }
+
+    void catalogCtl.search?.(nodeId);
+
+    // Rota do catálogo no seu app
+    navigate(`/catalogo?book=${encodeURIComponent(String(payload.id))}`, {
+      state: { openBook: payload },
+    });
+  }
+
   return (
     <div className="biblioteca-layout">
       <LeftSidebar
@@ -105,9 +136,7 @@ export function DashboardTree({ usuarioProp, dados, loans = [], onSair }) {
           <LibraryPage
             catalogCtl={catalogCtl}
             demoCtl={demoCtl}
-            onCatalogNodeClick={(id) => {
-              if (id != null) catalogCtl.search?.(id);
-            }}
+            onCatalogNodeClick={handleCatalogNodeClick}
             onDemoNodeClick={(value) => {
               if (value != null) demoCtl.search?.(value);
             }}
