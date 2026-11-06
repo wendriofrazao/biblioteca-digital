@@ -4,15 +4,12 @@ async function treeRequest(endpoint) {
   const token = localStorage.getItem("token");
 
   let response;
-
   try {
     response = await fetch(`${API_URL}/tree${endpoint}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...(token && {
-          Authorization: `Bearer ${token}`,
-        }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
   } catch {
@@ -20,11 +17,9 @@ async function treeRequest(endpoint) {
   }
 
   const data = await response.json().catch(() => ({}));
-
   if (!response.ok) {
     throw new Error(data.message || "Erro ao consultar a Árvore Rubro-Negra.");
   }
-
   return data;
 }
 
@@ -35,18 +30,32 @@ export async function getRedBlackTree() {
 
 export async function searchBookInTree(id) {
   const bookId = Number(id);
-
   if (!Number.isInteger(bookId) || bookId <= 0) {
     throw new Error("Informe um ID de livro válido.");
   }
-
   const response = await treeRequest(`/buscar/${bookId}`);
   return response.data;
 }
 
+// Pesquisa textual executada pelo backend percorrendo os nós da árvore.
+export async function searchBooksInTree(termo) {
+  const query = String(termo ?? "").trim();
+  if (!query) return [];
+
+  const response = await treeRequest(`/pesquisar?termo=${encodeURIComponent(query)}`);
+  const payload = response?.data ?? response;
+  const livros = Array.isArray(payload)
+    ? payload
+    : payload?.livros ?? payload?.results ?? [];
+
+  if (!Array.isArray(livros)) {
+    throw new Error("A API retornou um formato inválido para a pesquisa.");
+  }
+  return livros.map((item) => item?.value ?? item);
+}
+
 export async function getRedBlackTreeStats() {
   const response = await treeRequest("/estatisticas");
-
   return {
     nodeCount: response.quantidadeNos,
     root: response.raiz,

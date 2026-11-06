@@ -1,0 +1,246 @@
+/* Overlay */
+.afm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.afm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 25, 23, 0.5);
+  backdrop-filter: blur(2px);
+  transition: opacity 0.2s ease;
+}
+
+/* Modal */
+.afm-modal {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 32rem;
+  background: #faf7f2;
+  border-radius: 1rem;
+  border: 1px solid #e8dfd0;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+}
+
+/* Header */
+.afm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(232, 223, 208, 0.8);
+}
+
+.afm-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afm-icon {
+  color: #1a3c2a;
+  flex-shrink: 0;
+}
+
+.afm-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #0f2a1c;
+}
+
+.afm-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  border: none;
+  background: transparent;
+  color: #a8a29e;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.afm-close:hover {
+  color: #1c1917;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Body */
+.afm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  font-size: 0.75rem;
+  color: #292524;
+}
+
+.afm-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.afm-label {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #78716c;
+  margin-bottom: 0.5rem;
+}
+
+/* Tags */
+.afm-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.afm-tag {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(232, 223, 208, 0.8);
+  background: #ffffff;
+  color: #292524;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.afm-tag:hover {
+  background: #f0e9de;
+}
+
+.afm-tag--active {
+  background: #1a3c2a;
+  color: #faf7f2;
+  border-color: #1a3c2a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.afm-tag--active:hover {
+  background: #163323;
+  color: #faf7f2;
+}
+
+/* Switches */
+.afm-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.afm-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.afm-switch input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+  accent-color: #1a3c2a;
+  cursor: pointer;
+}
+
+.afm-switch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.afm-switch-title {
+  font-weight: 600;
+  color: #1c1917;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.afm-switch-desc {
+  color: #a8a29e;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+/* Footer */
+.afm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid rgba(232, 223, 208, 0.8);
+  gap: 1rem;
+}
+
+.afm-reset {
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #78716c;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.afm-reset:hover {
+  color: #c45c3e;
+}
+
+.afm-apply {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: #1a3c2a;
+  color: #faf7f2;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: background 0.15s ease;
+}
+
+.afm-apply:hover {
+  background: #163323;
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+  .afm-modal {
+    padding: 1.25rem;
+  }
+
+  .afm-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .afm-apply {
+    width: 100%;
+    text-align: center;
+  }
+
+  .afm-reset {
+    text-align: center;
+  }
+}

@@ -11,10 +11,10 @@ import {
   BookOpen,
   CheckCircle2,
 } from "lucide-react";
-
 import "../styles/components/CatalogView.css";
 import { TopHeader } from "../components/TopHeader.jsx";
 import { BookService } from "../service/book.service.jsx";
+import { searchBookInTree } from "../service/redBlackTree.service.jsx";
 
 function mapearLivro(livro) {
   const autores = (livro.autores ?? [])
@@ -23,9 +23,7 @@ function mapearLivro(livro) {
       return autor.nome ?? autor.name ?? "";
     })
     .filter(Boolean);
-
   const disponiveis = Number(livro.disponiveis ?? livro.quantidade ?? 0);
-
   return {
     id: livro.id,
     code: livro.isbn ?? "",
@@ -100,12 +98,10 @@ export function CatalogView({
   // quanto internamente, caso essas propriedades não sejam fornecidas.
   const [internalSortBy, setInternalSortBy] = useState("Mais recentes");
   const [internalViewMode, setInternalViewMode] = useState("grid");
-
   const isSortControlled =
     sortByProp !== undefined && typeof setSortByProp === "function";
   const sortBy = isSortControlled ? sortByProp : internalSortBy;
   const setSortBy = isSortControlled ? setSortByProp : setInternalSortBy;
-
   const isViewModeControlled =
     viewModeProp !== undefined && typeof setViewModeProp === "function";
   const viewMode = isViewModeControlled ? viewModeProp : internalViewMode;
@@ -120,21 +116,23 @@ export function CatalogView({
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [bookError, setBookError] = useState("");
 
-  // Carrega os livros da API.
+  // Estados da busca na Árvore Rubro-Negra (por ID)
+  const [treeSearchResult, setTreeSearchResult] = useState(null);
+  const [treeSearching, setTreeSearching] = useState(false);
+  const [treeSearchError, setTreeSearchError] = useState("");
+  const [treeSearchId, setTreeSearchId] = useState(null);
+
+  // Carrega os livros da API (listagem completa).
   useEffect(() => {
     let ativo = true;
-
     async function carregarLivros() {
       setLoadingBooks(true);
       setBookError("");
-
       try {
         const resultado = await BookService.getAllBooks();
-
         const lista = Array.isArray(resultado)
           ? resultado
           : (resultado?.livros ?? resultado?.data ?? []);
-
         if (ativo) {
           setApiBooks(lista.map(mapearLivro));
         }
@@ -148,13 +146,66 @@ export function CatalogView({
         }
       }
     }
-
     carregarLivros();
-
     return () => {
       ativo = false;
     };
   }, []);
+
+  // Busca por ID na Árvore Rubro-Negra quando o termo for um inteiro positivo.
+  useEffect(() => {
+    const query = searchTerm.trim();
+    const idNumerico = Number(query);
+    const isIdValido =
+      query !== "" &&
+      Number.isInteger(idNumerico) &&
+      idNumerico > 0 &&
+      String(idNumerico) === query;
+
+    if (!isIdValido) {
+      setTreeSearchResult(null);
+      setTreeSearchError("");
+      setTreeSearchId(null);
+      return;
+    }
+
+    let ativo = true;
+    async function buscarNaArvore() {
+      setTreeSearching(true);
+      setTreeSearchError("");
+      setTreeSearchId(idNumerico);
+      try {
+        const response = await searchBookInTree(idNumerico);
+        const raw = response?.data ?? response?.value ?? response;
+        if (ativo && raw) {
+          const livroBruto = raw.value ?? raw;
+          setTreeSearchResult(mapearLivro(livroBruto));
+        } else if (ativo) {
+          setTreeSearchResult(null);
+          setTreeSearchError(
+            `Livro com ID ${idNumerico} não encontrado na árvore.`,
+          );
+        }
+      } catch (error) {
+        if (ativo) {
+          setTreeSearchResult(null);
+          setTreeSearchError(
+            error.message ||
+              `Livro com ID ${idNumerico} não encontrado na árvore.`,
+          );
+        }
+      } finally {
+        if (ativo) {
+          setTreeSearching(false);
+        }
+      }
+    }
+
+    buscarNaArvore();
+    return () => {
+      ativo = false;
+    };
+  }, [searchTerm]);
 
   const catalogBooks = books.length > 0 ? books : apiBooks;
 
@@ -163,7 +214,6 @@ export function CatalogView({
     const valores = catalogBooks
       .map((book) => book.category)
       .filter((category) => category && category !== "Sem categoria");
-
     return ["Todas as Áreas", ...new Set(valores)];
   }, [catalogBooks]);
 
@@ -173,33 +223,45 @@ export function CatalogView({
       .filter(
         (publisher) => publisher && publisher !== "Editora não informada",
       );
-
     return ["Todas as Editoras", ...new Set(valores)];
   }, [catalogBooks]);
 
   // Aplica busca e filtros.
   const filteredBooks = useMemo(() => {
-    return catalogBooks.filter((book) => {
+    // Busca por ID com resultado da árvore → usa só esse livro
+    const baseList =
+      treeSearchId != null && treeSearchResult
+        ? [treeSearchResult]
+        : catalogBooks;
+
+    // Busca por ID sem resultado (e já terminou) → lista vazia
+    if (treeSearchId != null && !treeSearchResult && !treeSearching) {
+      return [];
+    }
+
+    return baseList.filter((book) => {
       const query = searchTerm.trim().toLocaleLowerCase("pt-BR");
+      const isIdSearch = treeSearchId != null;
 
-      const camposBusca = [
-        book.title,
-        book.author,
-        book.isbn,
-        book.category,
-        book.code,
-        book.publisher,
-      ];
-
-      if (
-        query &&
-        !camposBusca.some((valor) =>
-          String(valor ?? "")
-            .toLocaleLowerCase("pt-BR")
-            .includes(query),
-        )
-      ) {
-        return false;
+      // Em busca por ID a filtragem de texto já foi resolvida pela árvore
+      if (!isIdSearch && query) {
+        const camposBusca = [
+          book.title,
+          book.author,
+          book.isbn,
+          book.category,
+          book.code,
+          book.publisher,
+        ];
+        if (
+          !camposBusca.some((valor) =>
+            String(valor ?? "")
+              .toLocaleLowerCase("pt-BR")
+              .includes(query),
+          )
+        ) {
+          return false;
+        }
       }
 
       if (
@@ -209,7 +271,6 @@ export function CatalogView({
       ) {
         return false;
       }
-
       if (
         selectedPublisher &&
         selectedPublisher !== "Todas as Editoras" &&
@@ -219,16 +280,13 @@ export function CatalogView({
       ) {
         return false;
       }
-
       if (onlyAvailable && book.status !== "DISPONÍVEL") {
         return false;
       }
-
       if (
         activeTags.length > 0 &&
         !activeTags.some((tag) => {
           const tagNormalizada = String(tag).toLocaleLowerCase("pt-BR");
-
           return (
             (book.tags ?? []).some(
               (item) =>
@@ -241,7 +299,6 @@ export function CatalogView({
       ) {
         return false;
       }
-
       return true;
     });
   }, [
@@ -251,6 +308,9 @@ export function CatalogView({
     selectedPublisher,
     onlyAvailable,
     activeTags,
+    treeSearchId,
+    treeSearchResult,
+    treeSearching,
   ]);
 
   // Ordena os resultados usando os campos normalizados e os nomes vindos da API.
@@ -273,31 +333,24 @@ export function CatalogView({
     if (mostPopular || sortBy === "Mais emprestados") {
       return lista.sort((a, b) => emprestimos(b) - emprestimos(a));
     }
-
     if (sortBy === "Mais recentes") {
       return lista.sort((a, b) => ano(b) - ano(a));
     }
-
     if (sortBy === "Ordem alfabética (A-Z)") {
       return lista.sort((a, b) =>
         titulo(a).localeCompare(titulo(b), "pt-BR", { sensitivity: "base" }),
       );
     }
-
     if (sortBy === "Ano de publicação") {
       return lista.sort((a, b) => ano(a) - ano(b));
     }
-
     return lista;
   }, [filteredBooks, sortBy, mostPopular]);
 
   // Paginação baseada na quantidade real de resultados.
   const perPage = 12;
-
   const totalPages = Math.max(1, Math.ceil(sortedBooks.length / perPage));
-
   const page = Math.min(Math.max(1, Number(currentPage) || 1), totalPages);
-
   const currentBooks = sortedBooks.slice((page - 1) * perPage, page * perPage);
 
   // Mantém a página válida quando os resultados mudam.
@@ -305,16 +358,13 @@ export function CatalogView({
     if (Number(currentPage) !== page) {
       setCurrentPage(page);
     }
-
     setJumpPage(String(page));
   }, [currentPage, page, setCurrentPage]);
 
   const changePage = (value) => {
     const next = Math.min(Math.max(1, Number(value) || 1), totalPages);
-
     setCurrentPage(next);
     setJumpPage(String(next));
-
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -334,7 +384,6 @@ export function CatalogView({
     selectedCategory && selectedCategory !== "Todas as Áreas"
       ? selectedCategory
       : "Área do Conhecimento";
-
   const publisherLabel =
     selectedPublisher && selectedPublisher !== "Todas as Editoras"
       ? selectedPublisher
@@ -343,7 +392,6 @@ export function CatalogView({
   const renderDropdown = (items, selected, setter, allLabel) =>
     items.map((item) => {
       const active = selected === item || (!selected && item === allLabel);
-
       return (
         <button
           key={item}
@@ -373,26 +421,21 @@ export function CatalogView({
   // Exibe uma capa alternativa quando a imagem falha.
   const coverFallback = (event) => {
     const img = event.currentTarget;
-
     img.onerror = null;
     img.style.display = "none";
-
     const fallback = img.parentElement?.querySelector(
       ".cover-fallback, .list-cover-fallback",
     );
-
     fallback?.classList.add("visible");
   };
 
   const visiblePages = useMemo(() => {
     const pages = [];
-
     for (let n = 1; n <= totalPages; n++) {
       if (n === 1 || n === totalPages || (n >= page - 1 && n <= page + 1)) {
         pages.push(n);
       }
     }
-
     return pages;
   }, [page, totalPages]);
 
@@ -408,7 +451,6 @@ export function CatalogView({
           <i />
           <i />
         </div>
-
         <div className="hero-content">
           <div className="eyebrow">
             <span>Acervo Geral</span>
@@ -417,17 +459,14 @@ export function CatalogView({
               {catalogBooks.length.toLocaleString("pt-BR")} Obras Registradas
             </strong>
           </div>
-
           <h1>Catálogo do Acervo</h1>
-
           <p className="hero-description">
             Explore o acervo completo, consulte exemplares disponíveis e faça
-            empréstimos com facilidade.
+            empréstimos com facilidade. Busca por ID usa a Árvore Rubro-Negra.
           </p>
 
           <div className="catalog-search">
             <Search size={22} className="search-icon" />
-
             <input
               type="search"
               value={searchTerm}
@@ -435,10 +474,9 @@ export function CatalogView({
                 setSearchTerm(event.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Busque por título, autor, assunto ou ISBN..."
+              placeholder="Busque por título, autor, ISBN ou ID (Árvore Rubro-Negra)..."
               aria-label="Buscar no catálogo"
             />
-
             {searchTerm && (
               <button
                 className="icon-button"
@@ -452,7 +490,6 @@ export function CatalogView({
                 <X size={17} />
               </button>
             )}
-
             <button
               type="button"
               className="advanced-button"
@@ -461,7 +498,6 @@ export function CatalogView({
               <SlidersHorizontal size={15} />
               Filtros avançados
             </button>
-
             <button
               type="button"
               className="search-submit"
@@ -473,7 +509,6 @@ export function CatalogView({
 
           <div className="quick-filters">
             <span className="filter-intro">Filtrar por:</span>
-
             <div className="dropdown-wrap">
               <button
                 type="button"
@@ -487,7 +522,6 @@ export function CatalogView({
                 {categoryLabel}
                 <ChevronDown size={14} />
               </button>
-
               {showCategoryDropdown && (
                 <div className="dropdown-menu">
                   {renderDropdown(
@@ -499,7 +533,6 @@ export function CatalogView({
                 </div>
               )}
             </div>
-
             <div className="dropdown-wrap">
               <button
                 type="button"
@@ -513,7 +546,6 @@ export function CatalogView({
                 {publisherLabel}
                 <ChevronDown size={14} />
               </button>
-
               {showPublisherDropdown && (
                 <div className="dropdown-menu">
                   {renderDropdown(
@@ -525,7 +557,6 @@ export function CatalogView({
                 </div>
               )}
             </div>
-
             <button
               type="button"
               className={`filter-pill ${
@@ -538,7 +569,6 @@ export function CatalogView({
             >
               Apenas disponíveis
             </button>
-
             <button
               type="button"
               className={`filter-pill popular-pill ${
@@ -567,7 +597,6 @@ export function CatalogView({
             de <strong>{sortedBooks.length.toLocaleString("pt-BR")}</strong>{" "}
             resultados
           </p>
-
           <div className="active-tags">
             {activeTags.map((tag) => (
               <span className="tag" key={tag}>
@@ -584,7 +613,6 @@ export function CatalogView({
                 </button>
               </span>
             ))}
-
             {selectedCategory && (
               <span className="tag category-tag">
                 {selectedCategory}
@@ -600,7 +628,6 @@ export function CatalogView({
                 </button>
               </span>
             )}
-
             {selectedPublisher && (
               <span className="tag publisher-tag">
                 {selectedPublisher}
@@ -616,13 +643,26 @@ export function CatalogView({
                 </button>
               </span>
             )}
+            {treeSearchId != null && (
+              <span className="tag" title="Busca via Árvore Rubro-Negra">
+                ID {treeSearchId} (Árvore RN)
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                  aria-label="Limpar busca por ID"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
           </div>
         </div>
-
         <div className="toolbar-controls">
           <label className="sort-control">
             <span>Ordenar:</span>
-
             <select
               value={sortBy}
               onChange={(event) => {
@@ -636,7 +676,6 @@ export function CatalogView({
               <option>Ano de publicação</option>
             </select>
           </label>
-
           <div className="view-switch">
             <button
               type="button"
@@ -647,7 +686,6 @@ export function CatalogView({
             >
               <LayoutGrid size={16} />
             </button>
-
             <button
               type="button"
               className={viewMode === "list" ? "active" : ""}
@@ -666,24 +704,40 @@ export function CatalogView({
           Carregando livros...
         </p>
       )}
-
       {bookError && catalogBooks.length === 0 && (
         <p className="catalog-error" role="alert">
           {bookError}
         </p>
       )}
 
-      {!loadingBooks && !bookError && currentBooks.length === 0 ? (
+      {treeSearching && (
+        <p className="catalog-message" role="status">
+          Buscando ID {treeSearchId} na Árvore Rubro-Negra…
+        </p>
+      )}
+      {treeSearchError && !treeSearching && (
+        <p className="catalog-error" role="alert">
+          {treeSearchError}
+        </p>
+      )}
+      {treeSearchResult && !treeSearching && (
+        <p className="catalog-message" role="status">
+          Livro encontrado via Árvore Rubro-Negra (ID {treeSearchId}).
+        </p>
+      )}
+
+      {!loadingBooks &&
+      !bookError &&
+      !treeSearching &&
+      currentBooks.length === 0 ? (
         <section className="empty-state">
           <BookOpen size={45} />
-
           <h2>Nenhuma obra encontrada</h2>
-
           <p>
-            Não encontramos resultados para os filtros selecionados. Tente
-            limpar os termos de busca ou filtros ativos.
+            {treeSearchId != null
+              ? `O ID ${treeSearchId} não foi encontrado na Árvore Rubro-Negra.`
+              : "Não encontramos resultados para os filtros selecionados. Tente limpar os termos de busca ou filtros ativos."}
           </p>
-
           <button type="button" onClick={clearFilters}>
             Limpar todos os filtros
           </button>
@@ -739,7 +793,6 @@ export function CatalogView({
                       onError={coverFallback}
                     />
                   )}
-
                   <div
                     className={`cover-fallback ${bookCover ? "" : "visible"}`}
                   >
@@ -747,7 +800,6 @@ export function CatalogView({
                     <strong>{bookTitle}</strong>
                     <em>{bookAuthor}</em>
                   </div>
-
                   <span
                     className={`status-badge ${
                       available ? "available" : "unavailable"
@@ -755,7 +807,6 @@ export function CatalogView({
                   >
                     {bookStatus}
                   </span>
-
                   <div className="cover-overlay">
                     <button
                       type="button"
@@ -768,17 +819,12 @@ export function CatalogView({
                     </button>
                   </div>
                 </div>
-
                 <div className="book-info">
                   <span className="book-code">{bookCode}</span>
-
                   <h2>{bookTitle}</h2>
-
                   <p className="book-author">{bookAuthor}</p>
-
                   <div className="book-footer">
                     <span className="publisher-name">{bookPublisher}</span>
-
                     {available ? (
                       <span className="copy-count">
                         {availableCopies}{" "}
@@ -815,7 +861,6 @@ export function CatalogView({
                       onError={coverFallback}
                     />
                   )}
-
                   <div
                     className={`list-cover-fallback ${
                       bookCover ? "" : "visible"
@@ -825,11 +870,9 @@ export function CatalogView({
                     <span>{bookTitle}</span>
                   </div>
                 </div>
-
                 <div className="list-details">
                   <div className="list-labels">
                     <span className="book-code">{bookCode}</span>
-
                     <span
                       className={`inline-status ${
                         available ? "available" : "unavailable"
@@ -838,11 +881,8 @@ export function CatalogView({
                       {bookStatus}
                     </span>
                   </div>
-
                   <h2>{bookTitle}</h2>
-
                   <p>{bookAuthor}</p>
-
                   <div className="list-meta">
                     <span>{bookPublisher}</span>
                     <span>·</span>
@@ -853,14 +893,12 @@ export function CatalogView({
                     <span>ISBN {book.isbn ?? book.code ?? ""}</span>
                   </div>
                 </div>
-
                 <div className="list-actions">
                   <span className={available ? "copy-count" : "due-date"}>
                     {available
                       ? `${availableCopies} exemplares livres`
                       : "Indisponível"}
                   </span>
-
                   <button
                     type="button"
                     className={available ? "borrow-button" : "reserve-button"}
@@ -886,7 +924,6 @@ export function CatalogView({
         <p>
           Página <strong>{page}</strong> de <strong>{totalPages}</strong>
         </p>
-
         <div className="pagination-buttons">
           <button
             type="button"
@@ -897,16 +934,13 @@ export function CatalogView({
             <ArrowLeft size={14} />
             Anterior
           </button>
-
           {visiblePages.map((number, index) => {
             const previous = visiblePages[index - 1];
-
             return (
               <React.Fragment key={number}>
                 {previous && number - previous > 1 && (
                   <span className="ellipsis">…</span>
                 )}
-
                 <button
                   type="button"
                   className={`page-number ${page === number ? "active" : ""}`}
@@ -918,7 +952,6 @@ export function CatalogView({
               </React.Fragment>
             );
           })}
-
           <button
             type="button"
             className="page-direction"
@@ -929,7 +962,6 @@ export function CatalogView({
             <ArrowRight size={14} />
           </button>
         </div>
-
         <form
           className="jump-form"
           onSubmit={(event) => {
@@ -938,7 +970,6 @@ export function CatalogView({
           }}
         >
           <label htmlFor="jump-page">Ir para página:</label>
-
           <input
             id="jump-page"
             type="number"
@@ -947,7 +978,6 @@ export function CatalogView({
             value={jumpPage}
             onChange={(event) => setJumpPage(event.target.value)}
           />
-
           <button type="submit">Ir</button>
         </form>
       </nav>
