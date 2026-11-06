@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { CatalogView } from "../components/CatalogView.jsx";
 import { BookDetailModal } from "../components/BookDetailModal.jsx";
 import { AdvancedFiltersModal } from "../components/AdvancedFiltersModal.jsx";
@@ -78,11 +79,10 @@ export function Catalogo() {
   const navigate = useNavigate();
   const auth = useAuth();
   const user = auth?.user ?? null;
-  const { borrow, feedback, clearFeedback, busyId } = useLoans();
+  const { borrow, feedback, clearFeedback, busyId, loans = [] } = useLoans();
 
   const [livroSelecionado, setLivroSelecionado] = useState(null);
 
-  // Filtros do catálogo (controlados pela página)
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPublisher, setSelectedPublisher] = useState("");
@@ -139,28 +139,49 @@ export function Catalogo() {
     const livroId = book?.id;
     const usuarioId =
       user?.id ?? user?.userId ?? user?.codigo ?? user?.code ?? null;
+
     if (!livroId) {
-      window.alert("Livro inválido.");
+      toast.error("Livro inválido.");
       return;
     }
+
     if (!usuarioId) {
-      window.alert("Usuário não identificado. Faça login novamente.");
+      toast.error("Usuário não identificado. Faça login novamente.");
       return;
     }
-    const ok = window.confirm(
-      `Confirmar empréstimo de "${book.title ?? book.titulo}" por 14 dias?`,
+
+    // Limite de cota só no frontend
+    const maxLoans = Number(
+      user?.maxLoans ??
+        user?.limite_emprestimos ??
+        user?.limiteEmprestimos ??
+        5,
     );
-    if (!ok) return;
+
+    const ativos = (loans ?? []).filter(
+      (loan) => loan.status !== "devolvido",
+    ).length;
+
+    if (maxLoans > 0 && ativos >= maxLoans) {
+      toast.error(
+        `Cota esgotada (${ativos}/${maxLoans}). Devolva um livro para emprestar outro.`,
+      );
+      return;
+    }
+
     try {
       await borrow({ livroId, usuarioId });
       setLivroSelecionado(null);
+      toast.success(
+        `Empréstimo de "${book.title ?? book.titulo}" registrado com sucesso.`,
+      );
     } catch {
       /* feedback no hook */
     }
   }
 
   function handleReserve(book) {
-    window.alert(
+    toast.info(
       `Reserva registrada para: ${book?.title ?? book?.titulo ?? "obra"} (em breve).`,
     );
   }

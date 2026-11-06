@@ -7,8 +7,9 @@ import {
   Calendar,
   BookOpen,
   ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
-
+import { toast } from "sonner";
 import "../styles/components/LoansView.css";
 
 export function LoansView({
@@ -24,14 +25,46 @@ export function LoansView({
   const activeLoans = loans.filter((loan) => loan.status !== "devolvido");
   const returnedLoans = loans.filter((loan) => loan.status === "devolvido");
 
-  const maxLoans = Number(user?.maxLoans) || 0;
+  const maxLoans = Math.max(
+    0,
+    Number(
+      user?.maxLoans ??
+        user?.limite_emprestimos ??
+        user?.limiteEmprestimos ??
+        0,
+    ) || 0,
+  );
+
+  const quotaFull = maxLoans > 0 && activeLoans.length >= maxLoans;
+
   const quotaPercentage =
     maxLoans > 0
       ? Math.min(100, Math.round((activeLoans.length / maxLoans) * 100))
       : 0;
 
-  const formatReceiptId = (id) =>
-    String(id ?? "").toUpperCase();
+  const formatReceiptId = (id) => String(id ?? "").toUpperCase();
+
+  function handleExploreCatalog() {
+    if (quotaFull) {
+      toast.warning(
+        `Cota de empréstimos esgotada (${activeLoans.length}/${maxLoans}). Devolva um livro antes de pegar outro.`,
+      );
+    }
+    onExploreCatalog?.();
+  }
+
+  function handleRenew(loanId) {
+    const loan = activeLoans.find((item) => item.id === loanId);
+    if (loan && loan.renewalCount >= loan.maxRenewals) {
+      toast.error("Limite de renovações atingido para este empréstimo.");
+      return;
+    }
+    onRenewLoan?.(loanId);
+  }
+
+  function handleReturn(loanId) {
+    onReturnLoan?.(loanId);
+  }
 
   return (
     <main className="loans-view">
@@ -49,23 +82,26 @@ export function LoansView({
             <h1 className="loans-title">Meus Empréstimos</h1>
 
             <p className="loans-subtitle">
-              14 dias de prazo para cada título · Renove até 3 vezes online
-              sem burocracia.
+              14 dias de prazo para cada título · Renove até 3 vezes online sem
+              burocracia.
             </p>
           </div>
 
-          <div className="loans-quota">
+          <div className={`loans-quota ${quotaFull ? "quota-full" : ""}`}>
             <div className="loans-quota-info">
-              <span className="loans-quota-label">
-                Cota de Empréstimos
-              </span>
+              <span className="loans-quota-label">Cota de Empréstimos</span>
 
               <p className="loans-quota-value">
                 {activeLoans.length}
-                <span>
-                  {" "}de {maxLoans} livros
-                </span>
+                <span> de {maxLoans} livros</span>
               </p>
+
+              {quotaFull && (
+                <p className="loans-quota-warning">
+                  <AlertTriangle size={14} />
+                  Cota esgotada — devolva um título para liberar vaga.
+                </p>
+              )}
             </div>
 
             <div
@@ -84,9 +120,7 @@ export function LoansView({
             type="button"
             role="tab"
             aria-selected={activeTab === "ativos"}
-            className={`loans-tab ${
-              activeTab === "ativos" ? "active" : ""
-            }`}
+            className={`loans-tab ${activeTab === "ativos" ? "active" : ""}`}
             onClick={() => setActiveTab("ativos")}
           >
             Empréstimos Ativos ({activeLoans.length})
@@ -96,9 +130,7 @@ export function LoansView({
             type="button"
             role="tab"
             aria-selected={activeTab === "historico"}
-            className={`loans-tab ${
-              activeTab === "historico" ? "active" : ""
-            }`}
+            className={`loans-tab ${activeTab === "historico" ? "active" : ""}`}
             onClick={() => setActiveTab("historico")}
           >
             Histórico de Devoluções ({returnedLoans.length})
@@ -121,7 +153,7 @@ export function LoansView({
             <button
               type="button"
               className="loans-explore-button"
-              onClick={onExploreCatalog}
+              onClick={handleExploreCatalog}
             >
               Explorar Catálogo
               <ArrowRight size={15} />
@@ -131,7 +163,7 @@ export function LoansView({
           <section className="loans-list" aria-label="Empréstimos ativos">
             {activeLoans.map((loan) => {
               const renewalLimitReached =
-                loan.renewalCount >= loan.maxRenewals;
+                Number(loan.renewalCount ?? 0) >= Number(loan.maxRenewals ?? 3);
 
               return (
                 <article className="loan-card" key={loan.id}>
@@ -167,8 +199,8 @@ export function LoansView({
                         </div>
 
                         <span className="loan-renewal-info">
-                          Renovações: {loan.renewalCount} de{" "}
-                          {loan.maxRenewals}
+                          Renovações: {loan.renewalCount ?? 0} de{" "}
+                          {loan.maxRenewals ?? 3}
                         </span>
                       </div>
                     </div>
@@ -177,7 +209,7 @@ export function LoansView({
                   <div className="loan-controls">
                     <button
                       type="button"
-                      onClick={() => onRenewLoan(loan.id)}
+                      onClick={() => handleRenew(loan.id)}
                       disabled={renewalLimitReached}
                       className="loan-action-button loan-renew-button"
                     >
@@ -191,7 +223,7 @@ export function LoansView({
 
                     <button
                       type="button"
-                      onClick={() => onReturnLoan(loan.id)}
+                      onClick={() => handleReturn(loan.id)}
                       className="loan-action-button loan-return-button"
                     >
                       <CheckCircle2 size={14} />
@@ -246,10 +278,7 @@ export function LoansView({
       )}
 
       {receiptLoan && (
-        <div
-          className="receipt-overlay"
-          onClick={() => setReceiptLoan(null)}
-        >
+        <div className="receipt-overlay" onClick={() => setReceiptLoan(null)}>
           <section
             className="receipt-modal"
             role="dialog"
@@ -264,9 +293,7 @@ export function LoansView({
                 Biblioteca RB — Comprovante de Empréstimo
               </h2>
 
-              <p>
-                AUTENTICAÇÃO: RB-{formatReceiptId(receiptLoan.id)}-2026
-              </p>
+              <p>AUTENTICAÇÃO: RB-{formatReceiptId(receiptLoan.id)}-2026</p>
             </div>
 
             <div className="receipt-details">
@@ -303,7 +330,8 @@ export function LoansView({
               <div className="receipt-row">
                 <span>Renovações Efetuadas:</span>
                 <strong>
-                  {receiptLoan.renewalCount} de {receiptLoan.maxRenewals}
+                  {receiptLoan.renewalCount ?? 0} de{" "}
+                  {receiptLoan.maxRenewals ?? 3}
                 </strong>
               </div>
             </div>

@@ -7,16 +7,11 @@ import {
   CheckCircle,
   Copy,
   Clock,
-  ShieldAlert,
 } from "lucide-react";
+import { toast } from "sonner";
 import "../styles/components/BookDetailModal.css";
 
-export function BookDetailModal({
-  book,
-  onClose,
-  onBorrow,
-  onReserve,
-}) {
+export function BookDetailModal({ book, onClose, onBorrow, onReserve }) {
   const [copiedAbnt, setCopiedAbnt] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -48,8 +43,7 @@ export function BookDetailModal({
   const year = book.year ?? book.anoPublicacao ?? "Não informado";
   const pages = book.pages ?? book.paginas;
   const language = book.language ?? book.idioma ?? "Não informado";
-  const synopsis =
-    book.synopsis ?? book.sinopse ?? "Sinopse não disponível.";
+  const synopsis = book.synopsis ?? book.sinopse ?? "Sinopse não disponível.";
   const coverUrl = book.coverUrl ?? book.capaUrl;
 
   const authors = Array.isArray(book.autores)
@@ -60,8 +54,7 @@ export function BookDetailModal({
     : "";
 
   const author = book.autor ?? authors ?? "Autor não informado";
-  const category =
-    book.category ?? book.categoria?.nome ?? "Sem categoria";
+  const category = book.category ?? book.categoria?.nome ?? "Sem categoria";
 
   const totalCopies = book.totalCopies ?? book.quantidade ?? 0;
   const availableCopies = book.availableCopies ?? book.disponiveis ?? 0;
@@ -78,7 +71,7 @@ export function BookDetailModal({
   const physicalLocation =
     typeof shelfLocation === "string"
       ? shelfLocation
-      : book.localizacao ?? "";
+      : (book.localizacao ?? "");
 
   const corridor =
     typeof shelfLocation === "object" && shelfLocation !== null
@@ -105,9 +98,17 @@ export function BookDetailModal({
     try {
       await navigator.clipboard.writeText(reference);
       setCopiedAbnt(true);
+      toast.success("Referência ABNT copiada para a área de transferência.");
       window.setTimeout(() => setCopiedAbnt(false), 2500);
     } catch {
-      window.prompt("Copie a referência bibliográfica:", reference);
+      toast.error(
+        "Não foi possível copiar automaticamente. Selecione e copie a referência manualmente.",
+      );
+      // Fallback: tenta mostrar a referência em um toast longo
+      toast.message(reference, {
+        duration: 10000,
+        description: "Referência ABNT (copie manualmente se necessário)",
+      });
     }
   };
 
@@ -137,9 +138,7 @@ export function BookDetailModal({
         <header className="book-modal-header">
           <div className="book-modal-heading">
             <span className="book-modal-dot" />
-            <span>
-              Ficha catalográfica do acervo · {code}
-            </span>
+            <span>Ficha catalográfica do acervo · {code}</span>
           </div>
 
           <button
@@ -205,8 +204,8 @@ export function BookDetailModal({
                 </div>
 
                 <p>
-                  Consulte os bibliotecários caso precise de auxílio
-                  para localizar a obra.
+                  Consulte os bibliotecários caso precise de auxílio para
+                  localizar a obra.
                 </p>
               </div>
             </aside>
@@ -232,7 +231,11 @@ export function BookDetailModal({
 
                 <div>
                   <span>Disponíveis hoje</span>
-                  <strong className={isAvailable ? "text-available" : "text-unavailable"}>
+                  <strong
+                    className={
+                      isAvailable ? "text-available" : "text-unavailable"
+                    }
+                  >
                     {availableCopies} para empréstimo
                   </strong>
                 </div>

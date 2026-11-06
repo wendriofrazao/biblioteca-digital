@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { LoanService } from "../service/loan.service.jsx";
 
 /**
@@ -51,7 +52,7 @@ export function mapLoanFromApi(loan) {
 }
 
 /**
- * Hook funcional de empréstimos: listar, criar, devolver, recarregar.
+ * Hook de empréstimos: listar, criar, renovar, devolver e recarregar.
  */
 export function useLoans() {
   const [loans, setLoans] = useState([]);
@@ -68,12 +69,17 @@ export function useLoans() {
 
     try {
       const data = await LoanService.getAllLoans();
-      const lista = Array.isArray(data) ? data : [];
-      setLoans(lista.map(mapLoanFromApi).filter(Boolean));
-      return lista;
+      const lista = Array.isArray(data)
+        ? data
+        : (data?.emprestimos ?? data?.loans ?? data?.data ?? []);
+      const mapped = (Array.isArray(lista) ? lista : [])
+        .map(mapLoanFromApi)
+        .filter(Boolean);
+      setLoans(mapped);
+      return mapped;
     } catch (err) {
       const message =
-        err.message || "Não foi possível carregar os empréstimos.";
+        err?.message || "Não foi possível carregar os empréstimos.";
       setError(message);
       setLoans([]);
       throw err;
@@ -88,12 +94,29 @@ export function useLoans() {
 
   /** Emprestar livro (catálogo / modal). */
   const borrow = useCallback(
-    async ({ livroId, usuarioId, dataPrevista, observacao }) => {
+    async ({ livroId, usuarioId, dataPrevista, observacao, maxLoans }) => {
       setBusyId("borrow");
       setFeedback(null);
 
       try {
-        const due = dataPrevista ?? LoanService.defaultDueDate(14);
+        // Limite de cota (se informado pelo caller)
+        if (typeof maxLoans === "number" && maxLoans > 0) {
+          const activeCount = loans.filter(
+            (item) => item.status !== "devolvido",
+          ).length;
+          if (activeCount >= maxLoans) {
+            const message = `Cota de empréstimos esgotada (${activeCount}/${maxLoans}). Devolva um livro para emprestar outro.`;
+            setFeedback({ kind: "error", text: message });
+            toast.error(message);
+            throw new Error(message);
+          }
+        }
+
+        const due =
+          dataPrevista ??
+          (typeof LoanService.defaultDueDate === "function"
+            ? LoanService.defaultDueDate(14)
+            : undefined);
 
         const created = await LoanService.createLoan({
           livroId,
@@ -102,23 +125,98 @@ export function useLoans() {
           observacao,
         });
 
-        setFeedback({
-          kind: "success",
-          text: "Empréstimo realizado com sucesso.",
-        });
+        const successText = "Empréstimo realizado com sucesso.";
+        setFeedback({ kind: "success", text: successText });
+        toast.success(successText);
 
         await loadLoans().catch(() => {});
         return created;
       } catch (err) {
         const message =
-          err.message || "Não foi possível realizar o empréstimo.";
-        setFeedback({ kind: "error", text: message });
+          err?.message || "Não foi possível realizar o empréstimo.";
+        // Evita toast duplicado se já foi emitido no check de cota
+        if (!String(err?.message ?? "").includes("Cota de empréstimos")) {
+          setFeedback({ kind: "error", text: message });
+          toast.error(message);
+        }
         throw err;
       } finally {
         setBusyId(null);
       }
     },
-    [loadLoans],
+    [loadLoans, loans],
+  );
+
+  /** Renovar empréstimo (+14 dias, se a API suportar). */
+  const renewLoan = useCallback(
+    async (loanId) => {
+      const current = loans.find((item) => item.id === loanId);
+      if (!current) {
+        const message = "Empréstimo não encontrado.";
+        toast.error(message);
+        setFeedback({ kind: "error", text: message });
+        throw new Error(message);
+      }
+
+      if (current.status === "devolvido") {
+        const message = "Não é possível renovar um empréstimo já devolvido.";
+        toast.error(message);
+        setFeedback({ kind: "error", text: message });
+        throw new Error(message);
+      }
+
+      if (Number(current.renewalCount) >= Number(current.maxRenewals)) {
+        const message = "Limite de renovações atingido para este empréstimo.";
+        toast.error(message);
+        setFeedback({ kind: "error", text: message });
+        throw new Error(message);
+      }
+
+      setBusyId(loanId);
+      setFeedback(null);
+
+      try {
+        let updated = null;
+
+        if (typeof LoanService.renewLoan === "function") {
+          updated = await LoanService.renewLoan(loanId);
+        } else if (typeof LoanService.renew === "function") {
+          updated = await LoanService.renew(loanId);
+        } else {
+          throw new Error(
+            "Renovação não disponível no serviço de empréstimos.",
+          );
+        }
+
+        const successText = "Empréstimo renovado com sucesso.";
+        setFeedback({ kind: "success", text: successText });
+        toast.success(successText);
+
+        // Atualização otimista local
+        setLoans((list) =>
+          list.map((item) =>
+            item.id === loanId
+              ? {
+                  ...item,
+                  renewalCount: Number(item.renewalCount ?? 0) + 1,
+                }
+              : item,
+          ),
+        );
+
+        await loadLoans().catch(() => {});
+        return updated;
+      } catch (err) {
+        const message =
+          err?.message || "Não foi possível renovar o empréstimo.";
+        setFeedback({ kind: "error", text: message });
+        toast.error(message);
+        throw err;
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [loadLoans, loans],
   );
 
   /** Devolver livro. */
@@ -130,12 +228,10 @@ export function useLoans() {
       try {
         const updated = await LoanService.returnBook(loanId);
 
-        setFeedback({
-          kind: "success",
-          text: "Livro devolvido com sucesso.",
-        });
+        const successText = "Livro devolvido com sucesso.";
+        setFeedback({ kind: "success", text: successText });
+        toast.success(successText);
 
-        // Atualiza localmente sem esperar o GET (UX mais rápida)
         setLoans((current) =>
           current.map((item) =>
             item.id === loanId ? { ...item, status: "devolvido" } : item,
@@ -145,8 +241,9 @@ export function useLoans() {
         await loadLoans().catch(() => {});
         return updated;
       } catch (err) {
-        const message = err.message || "Não foi possível devolver o livro.";
+        const message = err?.message || "Não foi possível devolver o livro.";
         setFeedback({ kind: "error", text: message });
+        toast.error(message);
         throw err;
       } finally {
         setBusyId(null);
@@ -157,6 +254,16 @@ export function useLoans() {
 
   const activeLoans = loans.filter((l) => l.status !== "devolvido");
   const returnedLoans = loans.filter((l) => l.status === "devolvido");
+
+  /** Helper: verifica se ainda há vaga na cota. */
+  const canBorrow = useCallback(
+    (maxLoans) => {
+      const limit = Number(maxLoans);
+      if (!Number.isFinite(limit) || limit <= 0) return true;
+      return activeLoans.length < limit;
+    },
+    [activeLoans.length],
+  );
 
   return {
     loans,
@@ -169,6 +276,8 @@ export function useLoans() {
     clearFeedback,
     loadLoans,
     borrow,
+    renewLoan,
     returnLoan,
+    canBorrow,
   };
 }
