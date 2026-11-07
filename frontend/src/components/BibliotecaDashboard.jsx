@@ -132,7 +132,7 @@ function DashboardContent({ usuario, dados }) {
               </div>
             </dl>
 
-            <NavLink className="tree-link" to="/arvore">
+            <NavLink className="tree-link" to="/tree">
               Visualizar árvore
               <span aria-hidden="true">→</span>
             </NavLink>
