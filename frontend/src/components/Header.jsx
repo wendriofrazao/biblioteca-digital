@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard } from "lucide-react";
-import "./Header.css";
+import "../styles/components/header.css";
 
 export function Header({ onEntrar, onRegistrar, user }) {
   const location = useLocation();
