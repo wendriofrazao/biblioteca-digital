@@ -42,11 +42,13 @@ export async function searchBooksInTree(termo) {
   const query = String(termo ?? "").trim();
   if (!query) return [];
 
-  const response = await treeRequest(`/pesquisar?termo=${encodeURIComponent(query)}`);
+  const response = await treeRequest(
+    `/pesquisar?termo=${encodeURIComponent(query)}`,
+  );
   const payload = response?.data ?? response;
   const livros = Array.isArray(payload)
     ? payload
-    : payload?.livros ?? payload?.results ?? [];
+    : (payload?.livros ?? payload?.results ?? []);
 
   if (!Array.isArray(livros)) {
     throw new Error("A API retornou um formato inválido para a pesquisa.");
