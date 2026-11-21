@@ -30,12 +30,12 @@
 .biblioteca-main {
   flex: 1;
   min-width: 0;
-  padding: 36px 40px;
+  padding: 40px 80px;
 }
 
 .dashboard-content {
   width: 100%;
-  max-width: 1040px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
