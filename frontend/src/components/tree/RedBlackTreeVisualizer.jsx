@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "../../styles/components/tree/RedBlackTreeVisualizer.css";
 
 const GAP_X = 56;
@@ -140,14 +141,13 @@ export function RedBlackTreeVisualizer({
 
   const empty = safeSnapshot.rootId == null;
 
-  const hoveredNode = hovered != null ? safeSnapshot.nodes?.[hovered] : null;
+  const hoveredNode =
+    hovered?.id != null ? safeSnapshot.nodes?.[hovered.id] : null;
 
   const hoveredBook =
     hoveredNode && bookFor
       ? bookFor(hoveredNode.value ?? hoveredNode.id)
       : null;
-
-  const hoveredPos = hoveredNode ? pos[hoveredNode.id] : null;
 
   const bookTitle = getBookField(
     hoveredBook,
@@ -165,6 +165,7 @@ export function RedBlackTreeVisualizer({
 
   function handleWheel(event) {
     event.preventDefault();
+    setHovered(null);
 
     setView((current) => ({
       ...current,
@@ -175,6 +176,7 @@ export function RedBlackTreeVisualizer({
   function handlePointerDown(event) {
     if (event.button !== 0) return;
 
+    setHovered(null);
     drag.current = {
       x: event.clientX,
       y: event.clientY,
@@ -283,14 +285,33 @@ export function RedBlackTreeVisualizer({
     return "";
   }
 
-  const tooltipWidth = 240;
+  function getTooltipPosition(rect) {
+    if (!rect || typeof window === "undefined") {
+      return { left: 0, top: 0, placement: "bottom" };
+    }
 
-  const tooltipX = hoveredPos
-    ? Math.min(
-        Math.max(hoveredPos.x - tooltipWidth / 2, -offX + 4),
-        vbW - offX - tooltipWidth - 4,
-      )
-    : 0;
+    const tooltipWidth = 256;
+    const tooltipHeight = 88;
+    const gap = 12;
+    const margin = 12;
+
+    const rawLeft = rect.left + rect.width / 2 - tooltipWidth / 2;
+    const left = Math.min(
+      Math.max(rawLeft, margin),
+      Math.max(margin, window.innerWidth - tooltipWidth - margin),
+    );
+
+    const fitsBelow =
+      rect.bottom + gap + tooltipHeight <= window.innerHeight - margin;
+    const top = fitsBelow
+      ? rect.bottom + gap
+      : Math.max(margin, rect.top - tooltipHeight - gap);
+
+    return { left, top, placement: fitsBelow ? "bottom" : "top" };
+  }
+
+  const tooltipStyle =
+    hoveredBook && hovered?.rect ? getTooltipPosition(hovered.rect) : null;
 
   return (
     <div className={`tree-canvas ${compact ? "tree-canvas-compact" : ""}`}>
@@ -396,10 +417,22 @@ export function RedBlackTreeVisualizer({
                       className={nodeClass}
                       style={{ cursor: "pointer" }}
                       onClick={() => handleNodeClick(node.value ?? node.id)}
-                      onPointerEnter={() => setHovered(node.id)}
+                      onPointerEnter={(event) => {
+                        const rect =
+                          event.currentTarget.getBoundingClientRect();
+                        setHovered({
+                          id: node.id,
+                          rect: {
+                            left: rect.left,
+                            top: rect.top,
+                            bottom: rect.bottom,
+                            width: rect.width,
+                          },
+                        });
+                      }}
                       onPointerLeave={() =>
                         setHovered((current) =>
-                          current === node.id ? null : current,
+                          current?.id === node.id ? null : current,
                         )
                       }
                     >
@@ -434,42 +467,34 @@ export function RedBlackTreeVisualizer({
                     </g>
                   );
                 })}
-
-                {hoveredBook && hoveredPos && (
-                  <g
-                    pointerEvents="none"
-                    transform={`translate(${tooltipX}, ${
-                      hoveredPos.y + R + 14
-                    })`}
-                    className="book-tooltip"
-                  >
-                    <rect
-                      width={tooltipWidth}
-                      height="78"
-                      rx="10"
-                      className="book-tooltip-bg"
-                    />
-
-                    <text x="14" y="24" className="book-tooltip-title">
-                      {String(bookTitle).length > 30
-                        ? `${String(bookTitle).slice(0, 29)}…`
-                        : bookTitle}
-                    </text>
-
-                    <text x="14" y="44" className="book-tooltip-sub">
-                      {`${bookAuthor} · ${bookYear}`}
-                    </text>
-
-                    <text x="14" y="62" className="book-tooltip-hint">
-                      Clique para ver os detalhes
-                    </text>
-                  </g>
-                )}
               </g>
             </svg>
           </div>
         </div>
       )}
+
+      {hoveredBook &&
+        tooltipStyle &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            role="tooltip"
+            className="book-tooltip-portal"
+            style={{
+              left: `${tooltipStyle.left}px`,
+              top: `${tooltipStyle.top}px`,
+            }}
+          >
+            <p className="book-tooltip-portal-title">{bookTitle}</p>
+            <p className="book-tooltip-portal-sub">
+              {`${bookAuthor} · ${bookYear}`}
+            </p>
+            <p className="book-tooltip-portal-hint">
+              Clique para ver os detalhes
+            </p>
+          </div>,
+          document.body,
+        )}
 
       <div className="tree-controls">
         <button
