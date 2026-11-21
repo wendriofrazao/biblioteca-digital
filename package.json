@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c blue,green \"cd backend && yarn dev\" \"cd frontend && yarn dev\"",
+    "dev": "concurrently -n backend,frontend -c blue,green \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "dev:yarn": "concurrently -n backend,frontend -c blue,green \"cd backend && yarn dev\" \"cd frontend && yarn dev\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/wendriofrazao/biblioteca-digital/issues"
   },
-  "homepage": "https://github.com/wendriofrazao/biblioteca-digital#readme"
+  "homepage": "https://github.com/wendriofrazao/biblioteca-digital#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  }
 }
