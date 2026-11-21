@@ -16,10 +16,19 @@ const dadosPadrao = {
   },
 };
 
-function Stat({ icon, value, label }) {
+function Stat({ icon, value, label, badge, badgeTone = "muted", alert = false }) {
   return (
-    <article className="dashboard-stat">
-      <Icon name={icon} size={21} />
+    <article className={`dashboard-stat ${alert ? "is-alert" : ""}`}>
+      <div className="stat-top">
+        <span className="stat-icon">
+          <Icon name={icon} size={18} />
+        </span>
+
+        {badge && (
+          <span className={`stat-badge stat-badge-${badgeTone}`}>{badge}</span>
+        )}
+      </div>
+
       <p className="stat-value">{value ?? 0}</p>
       <p className="stat-label">{label}</p>
     </article>
@@ -28,7 +37,6 @@ function Stat({ icon, value, label }) {
 
 function DashboardContent({ usuario, dados }) {
   const devolucoes = Array.isArray(dados.devolucoes) ? dados.devolucoes : [];
-
   const arvore = dados.arvore ?? dadosPadrao.arvore;
 
   return (
@@ -47,31 +55,49 @@ function DashboardContent({ usuario, dados }) {
       </header>
 
       <div className="dashboard-animated">
-        <section className="stats-grid" aria-label="Resumo do acervo">
-          <Stat
-            icon="library"
-            value={dados.titulos}
-            label="Títulos no acervo"
-          />
+        <section className="stats-card" aria-label="Resumo do acervo">
+          <div className="stats-grid">
+            <Stat
+              icon="library"
+              value={dados.titulos}
+              label="Títulos no acervo"
+              badge="TOTAL"
+              badgeTone="muted"
+            />
 
-          <Stat
-            icon="book"
-            value={dados.exemplares}
-            label="Exemplares disponíveis"
-          />
+            <Stat
+              icon="book"
+              value={dados.exemplares}
+              label="Exemplares disponíveis"
+              badge="Livre"
+              badgeTone="success"
+            />
 
-          <Stat
-            icon="repeat"
-            value={dados.emprestimos}
-            label="Empréstimos ativos"
-          />
+            <Stat
+              icon="repeat"
+              value={dados.emprestimos}
+              label="Empréstimos ativos"
+              badge="EM CURSO"
+              badgeTone="muted"
+            />
 
-          <Stat icon="alert" value={dados.atrasos} label="Em atraso" />
+            <Stat
+              icon="alert"
+              value={dados.atrasos}
+              label="Em atraso"
+              badge="Atenção"
+              badgeTone="warning"
+              alert
+            />
+          </div>
         </section>
 
         <section className="dashboard-panels">
-          <article className="editorial-section returns-panel">
-            <h2>Devoluções próximas</h2>
+          <article className="dashboard-card returns-panel">
+            <div className="card-header">
+              <h2>Devoluções próximas</h2>
+              <span className="card-header-meta">Prazo regular</span>
+            </div>
 
             {devolucoes.length > 0 ? (
               <div className="returns-list">
@@ -86,7 +112,7 @@ function DashboardContent({ usuario, dados }) {
                     </div>
 
                     <div className="return-date">
-                      <Icon name="calendar" size={16} />
+                      <Icon name="calendar" size={14} />
                       <time>{devolucao.data ?? "Data não informada"}</time>
                     </div>
                   </div>
@@ -97,43 +123,55 @@ function DashboardContent({ usuario, dados }) {
             )}
           </article>
 
-          <article className="tree-panel">
-            <div className="panel-title">
-              <Icon name="tree" size={21} />
-              <h2>Índice da árvore</h2>
+          <article className="dashboard-card tree-panel">
+            <div className="card-header">
+              <div className="panel-title">
+                <Icon name="tree" size={18} />
+                <h2>Índice da árvore</h2>
+              </div>
+
+              <span className="tree-badge">Red-Black</span>
             </div>
 
             <dl className="tree-stats">
               <div>
                 <dt>Nós indexados</dt>
-                <dd>{arvore.nos ?? 0}</dd>
+                <dd className="tree-stat-pill">{arvore.nos ?? 0}</dd>
               </div>
 
               <div>
                 <dt>Altura da árvore</dt>
-                <dd>{arvore.altura ?? 0}</dd>
+                <dd className="tree-stat-pill">{arvore.altura ?? 0}</dd>
               </div>
 
               <div>
                 <dt>Altura negra</dt>
-                <dd>{arvore.alturaNegra ?? 0}</dd>
+                <dd className="tree-stat-pill">{arvore.alturaNegra ?? 0}</dd>
               </div>
 
               <div>
                 <dt>Raiz (ISBN)</dt>
-                <dd>{arvore.raiz ?? "—"}</dd>
+                <dd className="tree-stat-pill">{arvore.raiz ?? "—"}</dd>
               </div>
 
               <div>
                 <dt>Custo de busca</dt>
-                <dd>O(log n)</dd>
+                <dd className="tree-stat-pill tree-stat-pill-highlight">
+                  O(log n)
+                </dd>
               </div>
             </dl>
 
-            <NavLink className="tree-link" to="/tree">
-              Visualizar árvore
-              <span aria-hidden="true">→</span>
-            </NavLink>
+            <div className="tree-panel-footer">
+              <NavLink className="tree-link" to="/tree">
+                <span className="tree-link-text">
+                  Visualizar árvore completa
+                </span>
+                <span className="tree-link-arrow" aria-hidden="true">
+                  →
+                </span>
+              </NavLink>
+            </div>
           </article>
         </section>
       </div>
