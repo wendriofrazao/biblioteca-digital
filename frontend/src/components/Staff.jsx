@@ -697,23 +697,15 @@ export function AdminPage() {
     : "";
 
   if (checking) {
-    return (
-      <main className="admin-page">
-        <p>Verificando acesso...</p>
-      </main>
-    );
+    return <p className="admin-state">Verificando acesso...</p>;
   }
 
   if (!isAdmin) {
-    return (
-      <main className="admin-page">
-        <p className="admin-error">Acesso restrito a administradores.</p>
-      </main>
-    );
+    return <p className="admin-error">Acesso restrito a administradores.</p>;
   }
 
   return (
-    <main className="admin-page">
+    <>
       <header className="admin-page-header">
         <div>
           <p className="admin-eyebrow">BIBLIOTECA RB / PAINEL</p>
@@ -1243,6 +1235,6 @@ export function AdminPage() {
           </section>
         </div>
       )}
-    </main>
+    </>
   );
 }
