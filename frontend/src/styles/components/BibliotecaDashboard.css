@@ -21,9 +21,7 @@
 .biblioteca-layout {
   display: flex;
   width: 100%;
-  max-width: 1440px;
   min-height: calc(100vh - 80px);
-  margin: 0 auto;
   color: var(--rb-text);
   background: var(--rb-background);
   font-family: "DM Sans", sans-serif;
