@@ -1,6 +1,4 @@
 import { NavLink } from "react-router-dom";
-import { useState } from "react";
-import { LeftSidebar } from "./Sidebar";
 import { Icon } from "./Icon";
 import "../styles/components/BibliotecaDashboard.css";
 
@@ -152,11 +150,7 @@ function DashboardContent({ usuario, dados }) {
   );
 }
 
-export function BibliotecaDashboard({
-  usuario: usuarioProp,
-  dados,
-  onSair = () => {},
-}) {
+export function BibliotecaDashboard({ usuario: usuarioProp, dados }) {
   const usuarioOriginal = usuarioProp ?? {};
 
   const nome =
@@ -187,24 +181,5 @@ export function BibliotecaDashboard({
     devolucoes: Array.isArray(dados?.devolucoes) ? dados.devolucoes : [],
   };
 
-  const [activeTab, setActiveTab] = useState("painel");
-  const [isOpenMobile, setIsOpenMobile] = useState(false);
-
-  return (
-    <div className="biblioteca-layout">
-      <LeftSidebar
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        user={usuario}
-        loanCount={dadosSeguros.emprestimos}
-        isOpenMobile={isOpenMobile}
-        onCloseMobile={() => setIsOpenMobile(false)}
-        onSwitchUser={onSair}
-      />
-
-      <main className="biblioteca-main">
-        <DashboardContent usuario={usuario} dados={dadosSeguros} />
-      </main>
-    </div>
-  );
+  return <DashboardContent usuario={usuario} dados={dadosSeguros} />;
 }

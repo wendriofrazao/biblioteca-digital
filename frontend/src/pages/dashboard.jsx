@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
+import { useOutletContext } from "react-router-dom";
 import { BibliotecaDashboard } from "../components/BibliotecaDashboard.jsx";
 import { getDashboardData } from "../service/dashboard.service.jsx";
 import { useAuth } from "../context/auth.context.jsx";
 
 export function Dashboard() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { usuario: layoutUsuario, setLoanCount } = useOutletContext() ?? {};
 
   const [dados, setDados] = useState({});
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    // Aguarda somente a verificação inicial da autenticação.
     if (authLoading) return;
 
     let ativo = true;
@@ -23,6 +24,10 @@ export function Dashboard() {
 
         if (ativo) {
           setDados(resultado ?? {});
+
+          if (resultado?.emprestimos != null) {
+            setLoanCount?.(Number(resultado.emprestimos));
+          }
         }
       } catch (error) {
         if (ativo) {
@@ -39,27 +44,10 @@ export function Dashboard() {
     return () => {
       ativo = false;
     };
-  }, [authLoading]);
+  }, [authLoading, setLoanCount]);
 
-  const usuario = {
-    ...user,
-    nome:
-      user?.nome ??
-      user?.name ??
-      user?.nomeCompleto ??
-      user?.username ??
-      user?.email ??
-      "Usuário",
-    name:
-      user?.name ?? user?.nome ?? user?.username ?? user?.email ?? "Usuário",
-    tipo: user?.tipo ?? user?.role ?? "USER",
-    role: user?.role ?? user?.tipo ?? "USER",
-    matricula: user?.matricula ?? user?.code ?? user?.codigo ?? "",
-    code: user?.code ?? user?.matricula ?? user?.codigo ?? "",
-  };
+  const usuario = layoutUsuario ?? user ?? {};
 
-  // A dashboard aparece imediatamente, sem uma tela de carregamento
-  // durante a busca dos dados.
   return (
     <>
       {erro && (
@@ -71,7 +59,7 @@ export function Dashboard() {
         </div>
       )}
 
-      <BibliotecaDashboard usuario={usuario} dados={dados} onSair={signOut} />
+      <BibliotecaDashboard usuario={usuario} dados={dados} />
     </>
   );
 }

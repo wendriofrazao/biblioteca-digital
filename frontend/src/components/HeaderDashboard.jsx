@@ -1,16 +1,29 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import "../styles/components/HeaderDashboard.css";
 
-export function HeaderDashboard() {
-  const [menuAberto, setMenuAberto] = useState(false);
+export function HeaderDashboard({ isMobileMenuOpen, onToggleMobileMenu }) {
+  const [menuAbertoLocal, setMenuAbertoLocal] = useState(false);
+
+  const isControlled = typeof onToggleMobileMenu === "function";
+  const menuAberto = isControlled ? Boolean(isMobileMenuOpen) : menuAbertoLocal;
+
+  const handleToggleMenu = () => {
+    if (isControlled) {
+      onToggleMobileMenu();
+      return;
+    }
+
+    setMenuAbertoLocal((aberto) => !aberto);
+  };
 
   return (
     <header className="header-dashboard">
       <div className="header-dashboard-container">
-        <a href="/" className="header-dashboard-logo">
+        <Link to="/" className="header-dashboard-logo">
           <span className="header-dashboard-ponto" />
           Biblioteca RB<span className="header-dashboard-destaque">.</span>
-        </a>
+        </Link>
 
         <span className="header-dashboard-frase">
           entre livros e boas ideias
@@ -21,7 +34,7 @@ export function HeaderDashboard() {
           className="header-dashboard-menu-botao"
           aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
           aria-expanded={menuAberto}
-          onClick={() => setMenuAberto((aberto) => !aberto)}
+          onClick={handleToggleMenu}
         >
           {menuAberto ? (
             <svg
@@ -72,12 +85,23 @@ export function HeaderDashboard() {
         </svg>
       </div>
 
-      {menuAberto && (
+      {!isControlled && menuAberto && (
         <nav className="header-dashboard-menu">
-          <a href="/">Início</a>
-          <a href="/catalogo">Catálogo</a>
-          <a href="/emprestimos">Empréstimos</a>
-          <a href="/arvore-rb">Árvore Rubro-Negra</a>
+          <Link to="/" onClick={() => setMenuAbertoLocal(false)}>
+            Início
+          </Link>
+          <Link to="/catalogo" onClick={() => setMenuAbertoLocal(false)}>
+            Catálogo
+          </Link>
+          <Link to="/dashboard" onClick={() => setMenuAbertoLocal(false)}>
+            Painel
+          </Link>
+          <Link to="/loan" onClick={() => setMenuAbertoLocal(false)}>
+            Empréstimos
+          </Link>
+          <Link to="/tree" onClick={() => setMenuAbertoLocal(false)}>
+            Árvore Rubro-Negra
+          </Link>
         </nav>
       )}
     </header>

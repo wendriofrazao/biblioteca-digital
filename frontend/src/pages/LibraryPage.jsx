@@ -42,7 +42,7 @@ export function LibraryPage({
   if (!catalogCtl && !demoCtl) return null;
 
   return (
-    <main className="library-main library-main-dual">
+    <div className="library-main library-main-dual">
       <header className="library-heading">
         <p className="library-welcome">Painel do catálogo</p>
 
@@ -141,6 +141,6 @@ export function LibraryPage({
           </div>
         </article>
       </section>
-    </main>
+    </div>
   );
 }

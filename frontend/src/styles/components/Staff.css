@@ -9,7 +9,7 @@
   --admin-primary-hover: #194786;
   --admin-accent: #168477;
   --admin-danger: #c0393b;
-  min-height: 100vh;
+  min-height: 100%;
   padding: clamp(16px, 3vw, 36px);
   background: var(--admin-bg);
   color: var(--admin-text);
